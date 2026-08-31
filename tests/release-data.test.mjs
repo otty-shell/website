@@ -1,15 +1,23 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { writeTestFile } from "./helpers/filesystem.mjs";
+import { runNpmScriptAsync } from "./helpers/process.mjs";
+import { withReleaseApi } from "./helpers/release-api.mjs";
+import { readStableReleaseFixture } from "./helpers/release-fixture.mjs";
 
 const repositoryRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const generator = join(repositoryRoot, "scripts", "generate-release-data.mjs");
 const generatedReleaseData = join(repositoryRoot, ".generated", "release-data.json");
+const releaseDataStageManifest = join(
+  repositoryRoot,
+  ".generated",
+  "release-data-stage.json",
+);
 const temporaryRoots = [];
 
 function makeTemporaryDirectory() {
@@ -89,6 +97,14 @@ function prepareRelease(source, environmentOverrides = {}) {
       env: environment,
     },
   );
+}
+
+function prepareReleaseAsync(source, environmentOverrides = {}) {
+  const environment = { ...process.env, OTTY_RELEASE_SOURCE: source, ...environmentOverrides };
+  delete environment.CI;
+  delete environment.GITHUB_ACTIONS;
+
+  return runNpmScriptAsync(repositoryRoot, "prepare:release", environment);
 }
 
 test.after(() => {
@@ -270,4 +286,95 @@ test("local release preparation rejects fixture selection in CI", () => {
   const fixtureInCi = prepareRelease("fixture", { CI: "true" });
   assert.notEqual(fixtureInCi.status, 0);
   assert.match(`${fixtureInCi.stdout}\n${fixtureInCi.stderr}`, /local-only.*CI/i);
+});
+
+test("live release preparation requests GitHub's latest release and emits validated data", async () => {
+  const stableRelease = readStableReleaseFixture(repositoryRoot);
+
+  await withReleaseApi({ body: JSON.stringify(stableRelease) }, async ({ apiUrl, requests }) => {
+    const preparation = await prepareReleaseAsync("github", {
+      OTTY_GITHUB_RELEASES_API_URL: apiUrl,
+    });
+
+    assert.equal(
+      preparation.status,
+      0,
+      `release preparation failed\n\nstdout:\n${preparation.stdout}\n\nstderr:\n${preparation.stderr}`,
+    );
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].method, "GET");
+    assert.equal(requests[0].url, "/repos/otty-shell/otty/releases/latest");
+    assert.equal(requests[0].headers.accept, "application/vnd.github+json");
+    assert.equal(requests[0].headers["x-github-api-version"], "2026-03-10");
+    assert.match(requests[0].headers["user-agent"], /otty-website/i);
+
+    const data = JSON.parse(readFileSync(generatedReleaseData, "utf8"));
+    assert.equal(data.version, "0.2.0");
+    assert.equal(data.methods.length, 4);
+  });
+});
+
+test("live release preparation fails closed for unavailable or invalid API data", async () => {
+  const invalidMatrix = release();
+  invalidMatrix.assets[1] = {
+    ...invalidMatrix.assets[1],
+    name: "otty-1.2.3.x86_64.rpm",
+  };
+  const cases = [
+    {
+      name: "API failure",
+      response: { status: 503, body: JSON.stringify({ message: "unavailable" }) },
+      message: /GitHub Releases API request failed.*503/i,
+    },
+    {
+      name: "invalid JSON",
+      response: { body: "{" },
+      message: /GitHub Releases API returned invalid JSON/i,
+    },
+    {
+      name: "malformed response",
+      response: { body: JSON.stringify([]) },
+      message: /latest Release API response must be a JSON object/i,
+    },
+    {
+      name: "prerelease-only response",
+      response: {
+        body: JSON.stringify(
+          release({
+            tag: "v1.3.0-beta.1",
+            prerelease: true,
+            assets: requiredAssets("1.3.0-beta.1"),
+          }),
+        ),
+      },
+      message: /no published stable GitHub Release/i,
+    },
+    {
+      name: "invalid package matrix",
+      response: { body: JSON.stringify(invalidMatrix) },
+      message: /exactly one required asset.*rpm/i,
+    },
+  ];
+
+  for (const invalidCase of cases) {
+    const fixture = prepareRelease("fixture");
+    assert.equal(fixture.status, 0, invalidCase.name);
+    assert.equal(existsSync(generatedReleaseData), true, invalidCase.name);
+    assert.equal(existsSync(releaseDataStageManifest), true, invalidCase.name);
+
+    await withReleaseApi(invalidCase.response, async ({ apiUrl }) => {
+      const preparation = await prepareReleaseAsync("github", {
+        OTTY_GITHUB_RELEASES_API_URL: apiUrl,
+      });
+
+      assert.notEqual(preparation.status, 0, invalidCase.name);
+      assert.match(
+        `${preparation.stdout}\n${preparation.stderr}`,
+        invalidCase.message,
+        invalidCase.name,
+      );
+      assert.equal(existsSync(generatedReleaseData), false, invalidCase.name);
+      assert.equal(existsSync(releaseDataStageManifest), false, invalidCase.name);
+    });
+  }
 });

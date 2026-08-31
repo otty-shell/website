@@ -1,7 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { generateReleaseDataFile } from "./generate-release-data.mjs";
+import { generateReleaseData, generateReleaseDataFile } from "./generate-release-data.mjs";
 import {
   describeReleaseDataStage,
   generatedReleaseData,
@@ -17,18 +17,61 @@ const runningInCi =
 rmSync(generatedReleaseData, { force: true });
 rmSync(releaseDataStageManifest, { force: true });
 
-if (releaseSource !== "fixture") {
+if (!new Set(["fixture", "github"]).has(releaseSource)) {
   throw new Error(
-    'OTTY_RELEASE_SOURCE must be set explicitly to "fixture" for local release preparation.',
+    'OTTY_RELEASE_SOURCE must be set explicitly to "fixture" or "github" for release preparation.',
   );
 }
 
-if (runningInCi) {
+if (releaseSource === "fixture" && runningInCi) {
   throw new Error("The local-only release fixture cannot be selected in CI.");
 }
 
-const fixturePath = fileURLToPath(new URL("../fixtures/github-releases.json", import.meta.url));
-generateReleaseDataFile(fixturePath, generatedReleaseData);
+if (releaseSource === "fixture") {
+  const fixturePath = fileURLToPath(new URL("../fixtures/github-releases.json", import.meta.url));
+  generateReleaseDataFile(fixturePath, generatedReleaseData);
+} else {
+  const releasesApiUrl = new URL(
+    process.env.OTTY_GITHUB_RELEASES_API_URL ??
+      "https://api.github.com/repos/otty-shell/otty/releases/latest",
+  );
+  const headers = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "otty-website",
+    "X-GitHub-Api-Version": "2026-03-10",
+  };
+  const githubToken = process.env.GITHUB_TOKEN?.trim();
+
+  if (githubToken && releasesApiUrl.origin === "https://api.github.com") {
+    headers.Authorization = `Bearer ${githubToken}`;
+  }
+
+  const response = await fetch(releasesApiUrl, {
+    headers,
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `GitHub Releases API request failed with ${response.status} ${response.statusText}.`,
+    );
+  }
+
+  let release;
+
+  try {
+    release = await response.json();
+  } catch (cause) {
+    throw new Error("GitHub Releases API returned invalid JSON.", { cause });
+  }
+
+  if (!release || typeof release !== "object" || Array.isArray(release)) {
+    throw new Error("GitHub latest Release API response must be a JSON object.");
+  }
+
+  generateReleaseData([release], generatedReleaseData);
+}
+
 mkdirSync(dirname(releaseDataStageManifest), { recursive: true });
 writeFileSync(
   releaseDataStageManifest,

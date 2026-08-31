@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -9,12 +11,17 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { writeTestFile } from "./helpers/filesystem.mjs";
+import { runNpmScriptAsync } from "./helpers/process.mjs";
+import { withReleaseApi } from "./helpers/release-api.mjs";
+import { readStableReleaseFixture } from "./helpers/release-fixture.mjs";
 
 const repositoryRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const artifactPath = join(repositoryRoot, "dist");
+const generatedPath = join(repositoryRoot, ".generated");
+const generatedReleaseDataPath = join(generatedPath, "release-data.json");
+const releaseDataStageManifestPath = join(generatedPath, "release-data-stage.json");
 
 function readArtifact(relativePath) {
   return readFileSync(join(artifactPath, relativePath), "utf8");
@@ -102,6 +109,17 @@ Security**, find the notice that OTTY was blocked, select **Open Anyway**, then 
   return ottySource;
 }
 
+function createBuildEnvironment(ottySource, releaseEnvironment) {
+  const environment = {
+    ...process.env,
+    OTTY_SOURCE_DIR: ottySource,
+    ...releaseEnvironment,
+  };
+  delete environment.CI;
+  delete environment.GITHUB_ACTIONS;
+  return environment;
+}
+
 async function searchProductionIndex(query) {
   const originalFetch = globalThis.fetch;
 
@@ -138,13 +156,9 @@ test("the production artifact contains synchronized Documentation-only search", 
   const ottySource = createPublicDocumentationSource();
 
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-  const localBuildEnvironment = {
-    ...process.env,
-    OTTY_SOURCE_DIR: ottySource,
+  const localBuildEnvironment = createBuildEnvironment(ottySource, {
     OTTY_RELEASE_SOURCE: "fixture",
-  };
-  delete localBuildEnvironment.CI;
-  delete localBuildEnvironment.GITHUB_ACTIONS;
+  });
   const build = spawnSync(npm, ["run", "build"], {
     cwd: repositoryRoot,
     encoding: "utf8",
@@ -291,4 +305,113 @@ test("the production artifact contains synchronized Documentation-only search", 
 
   const productLandingSearch = await searchProductionIndex("workspace");
   assert.equal(productLandingSearch.results.length, 0);
+});
+
+test("a live-input build prerenders validated release facts without a runtime API call", async () => {
+  rmSync(artifactPath, { recursive: true, force: true });
+  const ottySource = createPublicDocumentationSource();
+  const stableRelease = readStableReleaseFixture(repositoryRoot);
+
+  try {
+    await withReleaseApi(
+      { body: JSON.stringify(stableRelease) },
+      async ({ apiUrl, requests }) => {
+        const buildEnvironment = createBuildEnvironment(ottySource, {
+          OTTY_RELEASE_SOURCE: "github",
+          OTTY_GITHUB_RELEASES_API_URL: apiUrl,
+        });
+        const build = await runNpmScriptAsync(repositoryRoot, "build", buildEnvironment);
+
+        assert.equal(
+          build.status,
+          0,
+          `production build failed\n\nstdout:\n${build.stdout}\n\nstderr:\n${build.stderr}`,
+        );
+        assert.equal(requests.length, 1);
+
+        const installation = htmlBeforeClientJavaScript("docs/install/index.html");
+        assert.match(installation, /Latest stable/);
+        assert.match(installation, /v0\.2\.0/);
+        assert.match(installation, /August 29, 2026/);
+        assert.match(
+          installation,
+          /href="https:\/\/github\.com\/otty-shell\/otty\/releases\/tag\/v0\.2\.0"/,
+        );
+        assert.equal(
+          installation.match(
+            /href="https:\/\/github\.com\/otty-shell\/otty\/releases\/download\/v0\.2\.0\//g,
+          )?.length,
+          4,
+        );
+        assert.doesNotMatch(
+          listFiles(artifactPath)
+            .filter((path) => path.endsWith(".html") || path.endsWith(".js"))
+            .map((path) => readFileSync(path, "utf8"))
+            .join("\n"),
+          /api\.github\.com|127\.0\.0\.1/,
+        );
+      },
+    );
+  } finally {
+    rmSync(ottySource, { recursive: true, force: true });
+  }
+});
+
+test("live-input failures stop the production build before an artifact exists", async () => {
+  const ottySource = createPublicDocumentationSource();
+  const invalidMatrix = structuredClone(readStableReleaseFixture(repositoryRoot));
+  invalidMatrix.assets[1].name = "otty-0.2.0.x86_64.rpm";
+  const failures = [
+    {
+      name: "API failure",
+      response: { status: 503, body: JSON.stringify({ message: "unavailable" }) },
+      message: /GitHub Releases API request failed.*503/i,
+    },
+    {
+      name: "invalid package matrix",
+      response: { body: JSON.stringify(invalidMatrix) },
+      message: /exactly one required asset.*rpm/i,
+    },
+  ];
+
+  try {
+    for (const failure of failures) {
+      rmSync(artifactPath, { recursive: true, force: true });
+
+      await withReleaseApi(failure.response, async ({ apiUrl }) => {
+        const buildEnvironment = createBuildEnvironment(ottySource, {
+          OTTY_RELEASE_SOURCE: "github",
+          OTTY_GITHUB_RELEASES_API_URL: apiUrl,
+        });
+        const build = await runNpmScriptAsync(repositoryRoot, "build", buildEnvironment);
+
+        assert.notEqual(build.status, 0, failure.name);
+        assert.match(`${build.stdout}\n${build.stderr}`, failure.message, failure.name);
+        assert.equal(existsSync(artifactPath), false, failure.name);
+      });
+    }
+
+    rmSync(artifactPath, { recursive: true, force: true });
+    rmSync(generatedReleaseDataPath, { recursive: true, force: true });
+    mkdirSync(generatedReleaseDataPath, { recursive: true });
+    const generatedDataFailureEnvironment = createBuildEnvironment(ottySource, {
+      OTTY_RELEASE_SOURCE: "github",
+    });
+    const generatedDataFailure = await runNpmScriptAsync(
+      repositoryRoot,
+      "build",
+      generatedDataFailureEnvironment,
+    );
+
+    assert.notEqual(generatedDataFailure.status, 0);
+    assert.match(
+      `${generatedDataFailure.stdout}\n${generatedDataFailure.stderr}`,
+      /EISDIR|is a directory/i,
+    );
+    assert.equal(existsSync(artifactPath), false);
+  } finally {
+    rmSync(generatedReleaseDataPath, { recursive: true, force: true });
+    rmSync(releaseDataStageManifestPath, { force: true });
+    rmSync(ottySource, { recursive: true, force: true });
+  }
 });

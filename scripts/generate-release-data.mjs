@@ -10,6 +10,10 @@ const stableSemver =
 
 export function generateReleaseDataFile(inputPath, outputPath) {
   const releases = readJson(inputPath);
+  generateReleaseData(releases, outputPath);
+}
+
+export function generateReleaseData(releases, outputPath) {
   const releaseData = selectAndValidatePublishedRelease(releases);
 
   mkdirSync(dirname(outputPath), { recursive: true });
