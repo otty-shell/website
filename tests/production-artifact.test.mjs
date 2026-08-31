@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
+import { assertCapabilitySequenceBehavior } from "./helpers/capability-sequence.mjs";
 import { writeTestFile } from "./helpers/filesystem.mjs";
 import { runNpmScriptAsync } from "./helpers/process.mjs";
 import { withReleaseApi } from "./helpers/release-api.mjs";
@@ -151,7 +152,7 @@ async function searchProductionIndex(query) {
   }
 }
 
-test("the production artifact contains synchronized Documentation-only search", async () => {
+test("the production artifact contains the Product Landing and synchronized Documentation-only search", async () => {
   rmSync(artifactPath, { recursive: true, force: true });
   const ottySource = createPublicDocumentationSource();
 
@@ -235,6 +236,42 @@ test("the production artifact contains synchronized Documentation-only search", 
     assert.match(landing, new RegExp(benefitPattern));
     previousCapabilityPosition = capabilityPosition;
   }
+
+  const capabilitySequence = landingMain.match(
+    /<section\b[^>]*aria-labelledby="capabilities-title"[\s\S]*?<\/section>/,
+  )?.[0];
+  assert.ok(capabilitySequence);
+  assert.match(
+    capabilitySequence,
+    /role="tablist"[^>]*aria-label="Current Capabilities"/,
+  );
+  assert.equal(capabilitySequence.match(/role="tab"/g)?.length, 4);
+  for (const tabName of ["Workspace", "Command blocks", "Explorer", "Quick Launch"]) {
+    assert.match(capabilitySequence, new RegExp(`role="tab"[^>]*>[\\s\\S]*?${tabName}`));
+  }
+  assert.doesNotMatch(capabilitySequence, />\s*(?:Previous|Next)\s*</i);
+
+  const capabilityPanels = capabilitySequence.match(/<article\b[^>]*role="tabpanel"[^>]*>/g);
+  assert.equal(capabilityPanels?.length, 4);
+  for (const panel of capabilityPanels ?? []) {
+    assert.doesNotMatch(panel, /\bhidden\b/);
+  }
+
+  assert.equal(capabilitySequence.match(/<video\b/g)?.length, 4);
+  assert.equal(capabilitySequence.match(/<source\b(?=[^>]*type="video\/webm")/g)?.length, 4);
+  assert.equal(capabilitySequence.match(/<video\b(?=[^>]*\bmuted)(?=[^>]*\bloop)(?=[^>]*\bplaysinline)[^>]*>/g)?.length, 4);
+  assert.equal(capabilitySequence.match(/<video\b(?=[^>]*\bposter="[^"]+\.png")/g)?.length, 4);
+  assert.equal(capabilitySequence.match(/<video\b[^>]*\bautoplay\b/g)?.length ?? 0, 0);
+  for (const description of [
+    "A terminal tab is opened, the workspace is divided into multiple panes, and separate Claude Code and htop sessions are started for parallel work.",
+    "A Cargo configuration file is printed, the resulting command block menu is opened, and a command is copied and reused at the prompt.",
+    "The terminal is split into multiple panes, Explorer is opened, and one session changes directory so the file tree follows its project context.",
+    "A saved SSH connection is created in Quick Launch and then opened as an interactive remote Ubuntu shell session.",
+  ]) {
+    assert.match(capabilitySequence, new RegExp(description.replaceAll(".", "\\.")));
+  }
+
+  assertCapabilitySequenceBehavior(readArtifact("index.html"));
 
   const evidenceAlternatives = [
     "OTTY workspace with Explorer beside four terminal panes showing Claude Code, Git history, Cargo configuration, and htop.",

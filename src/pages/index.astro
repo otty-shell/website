@@ -2,9 +2,13 @@
 import { Picture } from "astro:assets";
 import heroImage from "../../assets/product-evidence/hero.png";
 import commandBlocksImage from "../../assets/product-evidence/command-blocks-poster.png";
+import commandBlocksVideo from "../../assets/product-evidence/command-blocks.webm";
 import explorerImage from "../../assets/product-evidence/explorer-poster.png";
+import explorerVideo from "../../assets/product-evidence/explorer.webm";
 import quickLaunchImage from "../../assets/product-evidence/quick-launch-poster.png";
+import quickLaunchVideo from "../../assets/product-evidence/quick-launch.webm";
 import workspaceImage from "../../assets/product-evidence/workspace-poster.png";
+import workspaceVideo from "../../assets/product-evidence/workspace.webm";
 import "../styles/site.css";
 
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
@@ -13,32 +17,52 @@ const licenseUrl = `${githubUrl}/blob/main/LICENSE`;
 
 const capabilities = [
   {
+    slug: "workspace",
+    tabName: "Workspace",
     title: "Shape your terminal workspace",
     benefit:
       "Arrange tabs and splits so parallel sessions stay visible without becoming one long stream.",
     image: workspaceImage,
+    video: workspaceVideo,
     alt: "OTTY workspace with Claude Code and htop tabs above three split terminal panes.",
+    motionDescription:
+      "A terminal tab is opened, the workspace is divided into multiple panes, and separate Claude Code and htop sessions are started for parallel work.",
   },
   {
+    slug: "command-blocks",
+    tabName: "Command blocks",
     title: "Work with command blocks",
     benefit:
       "Treat commands and output as semantic units you can identify, select, and reuse.",
     image: commandBlocksImage,
+    video: commandBlocksVideo,
     alt: "OTTY terminal with Cargo configuration output grouped into a command block and its action menu open.",
+    motionDescription:
+      "A Cargo configuration file is printed, the resulting command block menu is opened, and a command is copied and reused at the prompt.",
   },
   {
+    slug: "explorer",
+    tabName: "Explorer",
     title: "Keep project files in reach",
     benefit:
       "Keep Explorer beside the shell and aligned with the focused session's current directory.",
     image: explorerImage,
+    video: explorerVideo,
     alt: "OTTY Explorer listing the project files beside three split terminal sessions, including a session in the website directory.",
+    motionDescription:
+      "The terminal is split into multiple panes, Explorer is opened, and one session changes directory so the file tree follows its project context.",
   },
   {
+    slug: "quick-launch",
+    tabName: "Quick Launch",
     title: "Launch commands and connections",
     benefit:
       "Start saved commands and open interactive SSH Client sessions without rebuilding the same context each time.",
     image: quickLaunchImage,
+    video: quickLaunchVideo,
     alt: "OTTY Quick Launch editor configuring an SSH connection named laptop while saved SSH and htop entries remain visible.",
+    motionDescription:
+      "A saved SSH connection is created in Quick Launch and then opened as an interactive remote Ubuntu shell session.",
   },
 ];
 ---
@@ -129,41 +153,317 @@ const capabilities = [
           <h2 id="capabilities-title">Current Capabilities</h2>
         </div>
 
-        <div class="capability-list">
-          {
-            capabilities.map((capability, index) => (
-              <article class="capability">
-                <div class="capability-copy">
-                  <span class="capability-index">0{index + 1}</span>
-                  <h3>{capability.title}</h3>
-                  <p>{capability.benefit}</p>
-                </div>
-                <figure>
-                  <div class="window-label" aria-hidden="true">
-                    <span>product_evidence/{String(index + 2).padStart(2, "0")}</span>
-                    <span>1792 × 1344</span>
+        <div
+          class="capability-sequence"
+          role="group"
+          aria-label="Current Capabilities sequence"
+          data-capability-sequence
+        >
+          <div class="sequence-status" data-sequence-controls hidden>
+            <span aria-hidden="true" data-sequence-count>01 / 04</span>
+            <i aria-hidden="true"><b data-sequence-progress></b></i>
+            <button
+              type="button"
+              aria-label="Pause automatic capability changes"
+              data-sequence-toggle
+            >pause autoplay</button>
+          </div>
+
+          <div class="capability-list">
+            {
+              capabilities.map((capability, index) => (
+                <article
+                  class="capability"
+                  id={`capability-${capability.slug}`}
+                  role="tabpanel"
+                  aria-labelledby={`capability-tab-${capability.slug}`}
+                  data-capability-panel
+                >
+                  <div class="capability-copy">
+                    <span class="capability-index">0{index + 1}</span>
+                    <h3>{capability.title}</h3>
+                    <p>{capability.benefit}</p>
                   </div>
-                  <div class="evidence-frame">
-                    <Picture
-                      src={capability.image}
-                      alt={capability.alt}
-                      formats={["avif", "webp"]}
-                      fallbackFormat="png"
-                      widths={[480, 768, 1120, 1792]}
-                      sizes="(max-width: 48rem) calc(100vw - 2rem), min(58vw, 50rem)"
-                      layout="constrained"
-                      fit="contain"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                </figure>
-              </article>
-            ))
-          }
+                  <figure>
+                    <div class="window-label" aria-hidden="true">
+                      <span>product_evidence/{String(index + 2).padStart(2, "0")}</span>
+                      <span>1792 × 1344</span>
+                    </div>
+                    <div class="evidence-frame">
+                      <Picture
+                        src={capability.image}
+                        alt={capability.alt}
+                        formats={["avif", "webp"]}
+                        fallbackFormat="png"
+                        widths={[480, 768, 1120, 1792]}
+                        sizes="(max-width: 48rem) calc(100vw - 2rem), min(58vw, 50rem)"
+                        layout="constrained"
+                        fit="contain"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <video
+                        hidden
+                        muted
+                        loop
+                        playsinline
+                        preload="metadata"
+                        poster={capability.image.src}
+                        aria-label={`${capability.tabName} capability recording`}
+                        aria-describedby={`capability-description-${capability.slug}`}
+                        data-capability-video
+                      >
+                        <source src={capability.video} type="video/webm" />
+                        Your browser does not support this recording.
+                      </video>
+                      <button
+                        type="button"
+                        hidden
+                        aria-label={`Play ${capability.tabName} recording`}
+                        data-media-toggle
+                      >play recording</button>
+                    </div>
+                    <figcaption id={`capability-description-${capability.slug}`}>
+                      {capability.motionDescription}
+                    </figcaption>
+                  </figure>
+                </article>
+              ))
+            }
+          </div>
+
+          <div class="sequence-tabs" data-sequence-controls hidden>
+            <div role="tablist" aria-label="Current Capabilities">
+              {
+                capabilities.map((capability, index) => (
+                  <button
+                    type="button"
+                    role="tab"
+                    id={`capability-tab-${capability.slug}`}
+                    aria-controls={`capability-${capability.slug}`}
+                    aria-label={capability.tabName}
+                    aria-selected={index === 0 ? "true" : "false"}
+                    tabindex={index === 0 ? "0" : "-1"}
+                    data-capability-tab
+                  >
+                    <span aria-hidden="true">0{index + 1}</span>
+                    {capability.tabName}
+                  </button>
+                ))
+              }
+            </div>
+          </div>
         </div>
       </section>
     </main>
+
+    <script is:inline>
+      for (const sequence of document.querySelectorAll("[data-capability-sequence]")) {
+        const items = [...sequence.querySelectorAll("[data-capability-tab]")]
+          .map((tab) => {
+            const panelId = tab.getAttribute("aria-controls");
+            const panel = panelId ? document.getElementById(panelId) : null;
+            return {
+              tab,
+              panel,
+              video: panel?.querySelector("[data-capability-video]"),
+              mediaToggle: panel?.querySelector("[data-media-toggle]"),
+            };
+          })
+          .filter(({ panel, video, mediaToggle }) => panel && video && mediaToggle);
+        if (items.length === 0) continue;
+        const sequenceToggle = sequence.querySelector("[data-sequence-toggle]");
+        const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const manuallyPausedVideos = new Set();
+        const failedVideos = new Set();
+        let reducedMotion = reducedMotionQuery.matches;
+        let selectedIndex = 0;
+        let timerId;
+        let isHovered = false;
+        let hasFocusWithin = false;
+        let isUserPaused = false;
+
+        function updateSequenceToggle() {
+          if (!sequenceToggle) return;
+          sequenceToggle.disabled = reducedMotion;
+          sequenceToggle.setAttribute(
+            "aria-label",
+            reducedMotion || isUserPaused
+              ? "Play automatic capability changes"
+              : "Pause automatic capability changes",
+          );
+          sequenceToggle.textContent = reducedMotion
+            ? "autoplay off: reduced motion"
+            : isUserPaused
+              ? "play autoplay"
+              : "pause autoplay";
+        }
+
+        function updateMediaToggle(index, isPlaying) {
+          const toggle = items[index]?.mediaToggle;
+          const recordingName = items[index]?.tab.getAttribute("aria-label");
+          if (!toggle || !recordingName) return;
+          toggle.setAttribute(
+            "aria-label",
+            `${isPlaying ? "Pause" : "Play"} ${recordingName} recording`,
+          );
+          toggle.textContent = isPlaying ? "pause recording" : "play recording";
+        }
+
+        function playVideo(index) {
+          const video = items[index]?.video;
+          if (!video || failedVideos.has(video)) return;
+          video.hidden = false;
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          updateMediaToggle(index, true);
+          const playback = video.play();
+          playback?.catch(() => {
+            video.hidden = true;
+            updateMediaToggle(index, false);
+          });
+        }
+
+        function synchronizeRecordings() {
+          items.forEach(({ video }, videoIndex) => {
+            const isSelected = videoIndex === selectedIndex;
+            if (!isSelected) {
+              if (!video.paused) video.pause();
+              video.hidden = true;
+              return;
+            }
+
+            if (!reducedMotion && !manuallyPausedVideos.has(video)) {
+              if (video.paused) playVideo(videoIndex);
+              else {
+                video.hidden = false;
+                updateMediaToggle(videoIndex, true);
+              }
+            } else {
+              if (!video.paused) video.pause();
+              video.hidden = true;
+              updateMediaToggle(videoIndex, false);
+            }
+          });
+        }
+
+        function stopTimer() {
+          window.clearTimeout(timerId);
+          timerId = undefined;
+        }
+
+        function scheduleNextCapability() {
+          stopTimer();
+          if (reducedMotion || isUserPaused || isHovered || hasFocusWithin) return;
+          timerId = window.setTimeout(() => {
+            selectCapability(selectedIndex + 1, { restartTimer: false });
+            scheduleNextCapability();
+          }, 6000);
+        }
+
+        function selectCapability(index, { restartTimer = true } = {}) {
+          selectedIndex = (index + items.length) % items.length;
+
+          items.forEach(({ tab, panel }, tabIndex) => {
+            const isSelected = tabIndex === selectedIndex;
+            tab.setAttribute("aria-selected", String(isSelected));
+            tab.tabIndex = isSelected ? 0 : -1;
+            panel.hidden = !isSelected;
+          });
+
+          const count = sequence.querySelector("[data-sequence-count]");
+          const progress = sequence.querySelector("[data-sequence-progress]");
+          if (count) {
+            count.textContent = `${String(selectedIndex + 1).padStart(2, "0")} / ${String(items.length).padStart(2, "0")}`;
+          }
+          if (progress) progress.style.width = `${((selectedIndex + 1) / items.length) * 100}%`;
+          synchronizeRecordings();
+          if (restartTimer) scheduleNextCapability();
+        }
+
+        items.forEach(({ tab }, tabIndex) => {
+          tab.addEventListener("click", () => selectCapability(tabIndex));
+          tab.addEventListener("keydown", (event) => {
+            let nextIndex;
+            if (event.key === "ArrowLeft") nextIndex = tabIndex - 1;
+            if (event.key === "ArrowRight") nextIndex = tabIndex + 1;
+            if (event.key === "Home") nextIndex = 0;
+            if (event.key === "End") nextIndex = items.length - 1;
+            if (nextIndex === undefined) return;
+            event.preventDefault();
+            selectCapability(nextIndex);
+            items[(nextIndex + items.length) % items.length].tab.focus();
+          });
+        });
+
+        sequence.addEventListener("mouseenter", () => {
+          isHovered = true;
+          stopTimer();
+        });
+        sequence.addEventListener("mouseleave", () => {
+          isHovered = false;
+          scheduleNextCapability();
+        });
+        sequence.addEventListener("focusin", () => {
+          hasFocusWithin = true;
+          stopTimer();
+        });
+        sequence.addEventListener("focusout", (event) => {
+          hasFocusWithin = event.relatedTarget
+            ? sequence.contains(event.relatedTarget)
+            : false;
+          if (!hasFocusWithin) scheduleNextCapability();
+        });
+        sequenceToggle?.addEventListener("click", () => {
+          if (reducedMotion) return;
+          isUserPaused = !isUserPaused;
+          updateSequenceToggle();
+          scheduleNextCapability();
+        });
+
+        items.forEach(({ video, mediaToggle: toggle }, videoIndex) => {
+          toggle.hidden = false;
+          updateMediaToggle(videoIndex, false);
+
+          toggle.addEventListener("click", () => {
+            if (video.paused) {
+              manuallyPausedVideos.delete(video);
+              playVideo(videoIndex);
+            } else {
+              manuallyPausedVideos.add(video);
+              video.pause();
+              updateMediaToggle(videoIndex, false);
+            }
+          });
+
+          const handleVideoFailure = () => {
+            failedVideos.add(video);
+            if (!video.paused) video.pause();
+            video.hidden = true;
+            toggle.hidden = true;
+          };
+          video.addEventListener("error", handleVideoFailure);
+          video.querySelectorAll("source").forEach((source) => {
+            source.addEventListener("error", handleVideoFailure);
+          });
+        });
+
+        reducedMotionQuery.addEventListener?.("change", (event) => {
+          reducedMotion = event.matches;
+          updateSequenceToggle();
+          synchronizeRecordings();
+          scheduleNextCapability();
+        });
+
+        sequence.querySelectorAll("[data-sequence-controls]").forEach((control) => {
+          control.hidden = false;
+        });
+        updateSequenceToggle();
+        sequence.dataset.enhanced = "true";
+        selectCapability(0);
+      }
+    </script>
 
     <footer class="site-footer">
       <a class="identity identity-small" href="/" aria-label="OTTY Product Landing">
@@ -212,7 +512,8 @@ const capabilities = [
     max-width: 100%;
   }
 
-  :global(a:focus-visible) {
+  :global(a:focus-visible),
+  :global(button:focus-visible) {
     outline: 2px solid var(--otty-cyan-bright);
     outline-offset: 4px;
   }
@@ -493,6 +794,46 @@ const capabilities = [
     object-fit: contain;
   }
 
+  .evidence-frame video {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #03090c;
+    object-fit: contain;
+  }
+
+  .evidence-frame video[hidden],
+  .evidence-frame button[hidden] {
+    display: none;
+  }
+
+  .evidence-frame button {
+    position: absolute;
+    z-index: 2;
+    right: 0.7rem;
+    bottom: 0.7rem;
+    min-height: 2.1rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid rgb(132 241 234 / 45%);
+    background: rgb(3 9 12 / 88%);
+    color: var(--otty-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.56rem;
+  }
+
+  .evidence-frame button::before {
+    color: var(--otty-magenta);
+    content: "[ ";
+  }
+
+  .evidence-frame button::after {
+    color: var(--otty-magenta);
+    content: " ]";
+  }
+
   figcaption {
     margin-top: 0.7rem;
     color: var(--otty-muted);
@@ -540,6 +881,61 @@ const capabilities = [
   h2::before {
     color: var(--otty-magenta);
     content: "./";
+  }
+
+  .sequence-status {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--otty-line);
+    border-bottom: 0;
+    color: var(--otty-muted);
+    font-size: 0.57rem;
+  }
+
+  .sequence-status[hidden],
+  .sequence-tabs[hidden],
+  .capability[hidden] {
+    display: none;
+  }
+
+  .sequence-status > i {
+    height: 1px;
+    background: var(--otty-line);
+  }
+
+  .sequence-status > i b {
+    display: block;
+    width: 25%;
+    height: 1px;
+    background: var(--otty-cyan);
+    transition: width 180ms ease;
+  }
+
+  .sequence-status button {
+    padding: 0;
+    overflow-wrap: anywhere;
+    border: 0;
+    background: transparent;
+    color: var(--otty-muted);
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .sequence-status button:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+
+  .sequence-status button::before {
+    content: "[ ";
+  }
+
+  .sequence-status button::after {
+    content: " ]";
   }
 
   .capability-list {
@@ -596,6 +992,50 @@ const capabilities = [
   .capability figure {
     align-self: center;
     padding: clamp(1.25rem, 3.5vw, 3.5rem);
+  }
+
+  .capability-sequence[data-enhanced="true"] .capability + .capability {
+    border-top: 0;
+  }
+
+  .sequence-tabs {
+    border: 1px solid var(--otty-line);
+    border-top: 0;
+  }
+
+  .sequence-tabs > [role="tablist"] {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .sequence-tabs button {
+    min-width: 0;
+    min-height: 3.5rem;
+    padding: 0.7rem;
+    overflow-wrap: anywhere;
+    border: 0;
+    border-right: 1px solid var(--otty-line);
+    background: transparent;
+    color: var(--otty-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.58rem;
+    text-align: left;
+  }
+
+  .sequence-tabs button:last-child {
+    border-right: 0;
+  }
+
+  .sequence-tabs button span {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--otty-magenta);
+  }
+
+  .sequence-tabs button[aria-selected="true"] {
+    background: rgb(16 202 195 / 8%);
+    color: var(--otty-text);
   }
 
   .site-footer {
@@ -676,6 +1116,18 @@ const capabilities = [
       border-bottom: 1px solid var(--otty-line);
     }
 
+    .sequence-tabs > [role="tablist"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sequence-tabs button:nth-child(2) {
+      border-right: 0;
+    }
+
+    .sequence-tabs button:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--otty-line);
+    }
+
     .site-footer {
       gap: 1.2rem;
     }
@@ -704,6 +1156,15 @@ const capabilities = [
       flex-direction: column;
       gap: 0.25rem;
     }
+
+    .sequence-status {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .sequence-status button {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -713,6 +1174,10 @@ const capabilities = [
 
     .hero-command strong span {
       animation: none;
+    }
+
+    .sequence-status > i b {
+      transition: none;
     }
   }
 </style>
