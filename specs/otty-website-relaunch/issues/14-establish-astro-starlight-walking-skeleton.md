@@ -4,11 +4,11 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A locked dependency installation followed by the production build emits prerendered HTML for `/`, `/docs/`, and `/docs/install/` and does not require SSR, an application backend, a client-side router, or an SPA shell.
-- [ ] The site is configured for `https://otty.run` without a repository base path, and the completed artifact preserves the custom-domain declaration needed by GitHub Pages.
-- [ ] Ordinary links connect the OTTY identity and the three canonical routes, and the existing OTTY name and logo assets remain available to the generated site.
-- [ ] Primary route content and navigation remain present in generated HTML before client JavaScript runs.
-- [ ] A production-artifact contract check verifies command exit status and externally visible output rather than framework internals, private component state, or CSS class names.
-- [ ] The legacy repository-root upload is no longer the build model; later tickets can add content and validation behind the established static build boundary.
+- [x] A locked dependency installation followed by the production build emits prerendered HTML for `/`, `/docs/`, and `/docs/install/` and does not require SSR, an application backend, a client-side router, or an SPA shell.
+- [x] The site is configured for `https://otty.run` without a repository base path, and the completed artifact preserves the custom-domain declaration needed by GitHub Pages.
+- [x] Ordinary links connect the OTTY identity and the three canonical routes, and the existing OTTY name and logo assets remain available to the generated site.
+- [x] Primary route content and navigation remain present in generated HTML before client JavaScript runs.
+- [x] A production-artifact contract check verifies command exit status and externally visible output rather than framework internals, private component state, or CSS class names.
+- [x] The legacy repository-root upload is no longer the build model; later tickets can add content and validation behind the established static build boundary.
