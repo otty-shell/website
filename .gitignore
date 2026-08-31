@@ -3,5 +3,7 @@
 .vscode
 .idea
 .astro
+.generated
 dist
 node_modules
+src/content/docs/docs

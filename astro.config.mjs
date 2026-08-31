@@ -8,6 +8,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "OTTY Documentation",
+      pagefind: true,
       social: [
         {
           icon: "github",

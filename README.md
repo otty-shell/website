@@ -10,9 +10,30 @@ Use Node.js 22.12 or newer and install the locked dependency graph:
 npm ci
 ```
 
-Start the development server with `npm run dev`.
+Set `OTTY_SOURCE_DIR` to an explicit OTTY checkout containing the Public Documentation Source at
+`docs/public/`, then start the development server:
+
+```sh
+OTTY_SOURCE_DIR=/path/to/otty npm run dev
+```
+
+Every preparation clears `src/content/docs/docs/` before staging that public tree. The generated
+staging directory is ignored by Git and must not be committed as a Documentation snapshot.
+
+Public pages may use Markdown or MDX and must define non-empty `title` frontmatter. MDX imports are
+limited to `@astrojs/starlight/components`; arbitrary package imports, scripts, and client directives
+are rejected during preparation.
 
 ## Production artifact
 
-Run `npm run check`, `npm test`, and `npm run build`. The production build is written to `dist/`.
-Inspect that artifact locally with `npm run preview`.
+Run the checks and production build against the same explicit source:
+
+```sh
+OTTY_SOURCE_DIR=/path/to/otty npm run check
+npm test
+OTTY_SOURCE_DIR=/path/to/otty npm run build
+```
+
+The production build is written to `dist/`. Starlight generates the Documentation routes and
+sidebar from the staged filesystem, then Pagefind indexes the completed artifact. Inspect it locally
+with `npm run preview`.
