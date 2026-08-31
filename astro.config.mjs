@@ -13,6 +13,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "OTTY Documentation",
+      customCss: ["./src/styles/site.css"],
       pagefind: true,
       social: [
         {

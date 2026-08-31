@@ -179,7 +179,96 @@ test("the production artifact contains synchronized Documentation-only search", 
   const nestedGuide = htmlBeforeClientJavaScript("docs/04-guides/index.html");
 
   assert.match(landing, /<h1[^>]*>\s*OTTY\s*<\/h1>/);
-  assert.match(landing, /Terminal-first Workspace/i);
+  assert.match(
+    landing,
+    /OTTY is a terminal-first workspace for development and operations across local and remote machines\./,
+  );
+  assert.equal(landing.match(/<header\b/g)?.length, 1);
+  assert.equal(landing.match(/<main\b/g)?.length, 1);
+  assert.equal(landing.match(/<section\b/g)?.length, 2);
+  assert.equal(landing.match(/<footer\b/g)?.length, 1);
+
+  const landingHeader = landing.match(/<header\b[\s\S]*?<\/header>/)?.[0];
+  assert.ok(landingHeader);
+  assert.match(landingHeader, /href="\/"[^>]*>[\s\S]*?OTTY/);
+  assert.match(landingHeader, /href="\/docs\/"[^>]*>Documentation/);
+  assert.match(landingHeader, /href="https:\/\/github\.com\/otty-shell\/otty"[^>]*>GitHub/);
+  assert.match(
+    landingHeader,
+    /href="\/docs\/install\/"[^>]*>Installation and Downloads/,
+  );
+
+  const landingMain = landing.match(/<main\b[\s\S]*?<\/main>/)?.[0];
+  assert.ok(landingMain);
+  assert.match(landingMain, /Early Release/);
+  assert.match(landingMain, /Linux/);
+  assert.match(landingMain, /macOS/);
+  assert.match(landingMain, /href="\/docs\/install\/"[^>]*>[\s\S]*?Download OTTY/);
+  assert.match(landingMain, /href="\/docs\/"[^>]*>[\s\S]*?Read docs/);
+
+  const capabilityContent = [
+    [
+      "Shape your terminal workspace",
+      "Arrange tabs and splits so parallel sessions stay visible without becoming one long stream.",
+    ],
+    [
+      "Work with command blocks",
+      "Treat commands and output as semantic units you can identify, select, and reuse.",
+    ],
+    [
+      "Keep project files in reach",
+      "Keep Explorer beside the shell and aligned with the focused session's current directory.",
+    ],
+    [
+      "Launch commands and connections",
+      "Start saved commands and open interactive SSH Client sessions without rebuilding the same context each time.",
+    ],
+  ];
+  let previousCapabilityPosition = -1;
+  for (const [title, benefit] of capabilityContent) {
+    const capabilityPosition = landing.indexOf(title);
+    assert.ok(capabilityPosition > previousCapabilityPosition);
+    const benefitPattern = benefit
+      .split("'")
+      .map((segment) => segment.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("(?:'|&#39;)");
+    assert.match(landing, new RegExp(benefitPattern));
+    previousCapabilityPosition = capabilityPosition;
+  }
+
+  const evidenceAlternatives = [
+    "OTTY workspace with Explorer beside four terminal panes showing Claude Code, Git history, Cargo configuration, and htop.",
+    "OTTY workspace with Claude Code and htop tabs above three split terminal panes.",
+    "OTTY terminal with Cargo configuration output grouped into a command block and its action menu open.",
+    "OTTY Explorer listing the project files beside three split terminal sessions, including a session in the website directory.",
+    "OTTY Quick Launch editor configuring an SSH connection named laptop while saved SSH and htop entries remain visible.",
+  ];
+  for (const alternative of evidenceAlternatives) {
+    assert.match(landing, new RegExp(`alt="${alternative.replaceAll(".", "\\.")}"`));
+  }
+  assert.equal(landing.match(/<picture\b/g)?.length, 5);
+  assert.equal(landing.match(/type="image\/avif"/g)?.length, 5);
+  assert.equal(landing.match(/type="image\/webp"/g)?.length, 5);
+  assert.equal(landing.match(/<img\b(?=[^>]*\bsrc="[^"]+\.png")/g)?.length, 5);
+  assert.match(landing, /<img\b(?=[^>]*\bwidth="2077")(?=[^>]*\bheight="1208")[^>]*>/);
+  assert.equal(
+    landing.match(/<img\b(?=[^>]*\bwidth="1792")(?=[^>]*\bheight="1344")[^>]*>/g)
+      ?.length,
+    4,
+  );
+
+  const landingFooter = landing.match(/<footer\b[\s\S]*?<\/footer>/)?.[0];
+  assert.ok(landingFooter);
+  assert.match(landingFooter, /OTTY/);
+  assert.match(landingFooter, /href="\/docs\/"[^>]*>Documentation/);
+  assert.match(landingFooter, /href="https:\/\/github\.com\/otty-shell\/otty"[^>]*>GitHub/);
+  assert.match(
+    landingFooter,
+    /href="https:\/\/github\.com\/otty-shell\/otty\/blob\/main\/LICENSE"[^>]*>License/,
+  );
+  assert.match(landingFooter, /© OTTY contributors/);
+  assert.doesNotMatch(landingFooter, /Download/);
+
   assert.match(landing, /href="\/"[^>]*>[\s\S]*?OTTY/);
   assert.match(landing, /href="\/docs\/"/);
   assert.match(landing, /href="\/docs\/install\/"/);
@@ -278,6 +367,9 @@ test("the production artifact contains synchronized Documentation-only search", 
 
   for (const asset of ["logo-full.svg", "logo-small.svg", "otty.png"]) {
     assert.equal(existsSync(join(artifactPath, "assets", asset)), true);
+  }
+  for (const font of ["hack-regular.woff2", "hack-bold.woff2"]) {
+    assert.equal(existsSync(join(artifactPath, "fonts", "hack", font)), true);
   }
 
   const completeArtifact = listFiles(artifactPath)

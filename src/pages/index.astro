@@ -1,5 +1,46 @@
 ---
+import { Picture } from "astro:assets";
+import heroImage from "../../assets/product-evidence/hero.png";
+import commandBlocksImage from "../../assets/product-evidence/command-blocks-poster.png";
+import explorerImage from "../../assets/product-evidence/explorer-poster.png";
+import quickLaunchImage from "../../assets/product-evidence/quick-launch-poster.png";
+import workspaceImage from "../../assets/product-evidence/workspace-poster.png";
+import "../styles/site.css";
+
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
+const githubUrl = "https://github.com/otty-shell/otty";
+const licenseUrl = `${githubUrl}/blob/main/LICENSE`;
+
+const capabilities = [
+  {
+    title: "Shape your terminal workspace",
+    benefit:
+      "Arrange tabs and splits so parallel sessions stay visible without becoming one long stream.",
+    image: workspaceImage,
+    alt: "OTTY workspace with Claude Code and htop tabs above three split terminal panes.",
+  },
+  {
+    title: "Work with command blocks",
+    benefit:
+      "Treat commands and output as semantic units you can identify, select, and reuse.",
+    image: commandBlocksImage,
+    alt: "OTTY terminal with Cargo configuration output grouped into a command block and its action menu open.",
+  },
+  {
+    title: "Keep project files in reach",
+    benefit:
+      "Keep Explorer beside the shell and aligned with the focused session's current directory.",
+    image: explorerImage,
+    alt: "OTTY Explorer listing the project files beside three split terminal sessions, including a session in the website directory.",
+  },
+  {
+    title: "Launch commands and connections",
+    benefit:
+      "Start saved commands and open interactive SSH Client sessions without rebuilding the same context each time.",
+    image: quickLaunchImage,
+    alt: "OTTY Quick Launch editor configuring an SSH connection named laptop while saved SSH and htop entries remain visible.",
+  },
+];
 ---
 
 <!doctype html>
@@ -7,6 +48,8 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#071014" />
     <meta
       name="description"
       content="OTTY is an Early Release Terminal-first Workspace for development and operations across local and remote machines."
@@ -15,150 +58,661 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
     <link href="/assets/logo-small.svg" rel="icon" type="image/svg+xml" />
     <title>OTTY — Terminal-first Workspace</title>
   </head>
-  <body data-pagefind-ignore>
-    <header>
+  <body class="landing-page" data-pagefind-ignore>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
       <a class="identity" href="/" aria-label="OTTY Product Landing">
         <img src="/assets/logo-small.svg" alt="" width="32" height="32" />
         <span>OTTY</span>
       </a>
       <nav aria-label="Primary navigation">
         <a href="/docs/">Documentation</a>
-        <a href="/docs/install/">Installation and Downloads</a>
-        <a href="https://github.com/otty-shell/otty">GitHub</a>
+        <a href={githubUrl}>GitHub</a>
+        <a class="nav-download" href="/docs/install/">Installation and Downloads</a>
       </nav>
     </header>
 
-    <main>
-      <p class="eyebrow">Early Release</p>
-      <h1>OTTY</h1>
-      <p class="lede">
-        OTTY is a Terminal-first Workspace for development and operations across local and remote
-        machines.
-      </p>
-      <div class="actions">
-        <a class="primary" href="/docs/install/">Install OTTY</a>
-        <a href="/docs/">Read Documentation</a>
-      </div>
+    <main id="main-content">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="prompt" aria-hidden="true">
+            <span>otty@workspace</span><i>:</i><b>~</b><i>$</i>
+          </div>
+          <div class="release-badge"><i aria-hidden="true"></i> Early Release</div>
+          <h1 id="hero-title">OTTY</h1>
+          <p class="hero-command">Keep terminal work <strong>together<span>_</span></strong></p>
+          <p class="lede">
+            OTTY is a terminal-first workspace for development and operations across local and
+            remote machines.
+          </p>
+          <div class="actions">
+            <a class="primary-action" href="/docs/install/"
+              ><span aria-hidden="true">&gt;</span> Download OTTY</a
+            >
+            <a href="/docs/"><span aria-hidden="true">&gt;</span> Read docs</a>
+          </div>
+          <p class="platforms" aria-label="Available for Linux and macOS">
+            <span>[ Linux ]</span><span>[ macOS ]</span>
+          </p>
+        </div>
+
+        <figure class="hero-evidence">
+          <div class="window-label" aria-hidden="true">
+            <span>product_evidence/hero.png</span><span>2077 × 1208</span>
+          </div>
+          <div class="evidence-frame">
+            <Picture
+              src={heroImage}
+              alt="OTTY workspace with Explorer beside four terminal panes showing Claude Code, Git history, Cargo configuration, and htop."
+              formats={["avif", "webp"]}
+              fallbackFormat="png"
+              widths={[640, 960, 1400, 2077]}
+              sizes="(max-width: 60rem) calc(100vw - 2rem), min(55vw, 53rem)"
+              layout="constrained"
+              fit="contain"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </div>
+          <figcaption>Product Evidence 01 / latest Published Release / Linux capture</figcaption>
+        </figure>
+      </section>
+
+      <section class="capabilities" aria-labelledby="capabilities-title">
+        <div class="section-heading">
+          <div>
+            <span>otty capabilities.list</span>
+            <small>4 entries / latest Published Release</small>
+          </div>
+          <h2 id="capabilities-title">Current Capabilities</h2>
+        </div>
+
+        <div class="capability-list">
+          {
+            capabilities.map((capability, index) => (
+              <article class="capability">
+                <div class="capability-copy">
+                  <span class="capability-index">0{index + 1}</span>
+                  <h3>{capability.title}</h3>
+                  <p>{capability.benefit}</p>
+                </div>
+                <figure>
+                  <div class="window-label" aria-hidden="true">
+                    <span>product_evidence/{String(index + 2).padStart(2, "0")}</span>
+                    <span>1792 × 1344</span>
+                  </div>
+                  <div class="evidence-frame">
+                    <Picture
+                      src={capability.image}
+                      alt={capability.alt}
+                      formats={["avif", "webp"]}
+                      fallbackFormat="png"
+                      widths={[480, 768, 1120, 1792]}
+                      sizes="(max-width: 48rem) calc(100vw - 2rem), min(58vw, 50rem)"
+                      layout="constrained"
+                      fit="contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                </figure>
+              </article>
+            ))
+          }
+        </div>
+      </section>
     </main>
 
-    <footer>
-      <span>OTTY</span>
-      <a href="/docs/">Documentation</a>
-      <a href="https://github.com/otty-shell/otty">GitHub</a>
+    <footer class="site-footer">
+      <a class="identity identity-small" href="/" aria-label="OTTY Product Landing">
+        <img src="/assets/logo-small.svg" alt="" width="27" height="27" />
+        <span>OTTY</span>
+      </a>
+      <nav aria-label="Footer navigation">
+        <a href="/docs/">Documentation</a>
+        <a href={githubUrl}>GitHub</a>
+        <a href={licenseUrl}>License</a>
+      </nav>
+      <span>© OTTY contributors</span>
     </footer>
   </body>
 </html>
 
 <style>
-  :root {
-    color-scheme: dark;
-    font-family:
-      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #090d12;
-    color: #edf4f7;
+  :global(*) {
+    box-sizing: border-box;
   }
 
-  body {
+  :global(html) {
+    background: var(--otty-page);
+    scroll-behavior: smooth;
+  }
+
+  :global(body.landing-page) {
+    min-width: 0;
     min-height: 100vh;
     margin: 0;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
+    overflow-x: clip;
+    background:
+      linear-gradient(rgb(132 241 234 / 2.4%) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(132 241 234 / 2.4%) 1px, transparent 1px),
+      var(--otty-page);
+    background-size: 4.5rem 4.5rem;
+    color: var(--otty-text);
   }
 
-  header,
-  footer {
+  :global(a) {
+    color: inherit;
+  }
+
+  :global(img) {
+    display: block;
+    max-width: 100%;
+  }
+
+  :global(a:focus-visible) {
+    outline: 2px solid var(--otty-cyan-bright);
+    outline-offset: 4px;
+  }
+
+  .skip-link {
+    position: fixed;
+    z-index: 10;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.75rem 1rem;
+    transform: translateY(-200%);
+    border: 1px solid var(--otty-cyan);
+    background: var(--otty-page);
+    color: var(--otty-text);
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
+  .site-header,
+  .hero,
+  .capabilities,
+  .site-footer {
+    width: min(90rem, calc(100% - 3rem));
+    margin-inline: auto;
+  }
+
+  .site-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1.25rem clamp(1.25rem, 5vw, 5rem);
-    border-color: #25303a;
-  }
-
-  header {
-    border-bottom: 1px solid #25303a;
-  }
-
-  footer {
-    border-top: 1px solid #25303a;
-  }
-
-  nav,
-  footer {
-    flex-wrap: wrap;
-  }
-
-  nav {
-    display: flex;
-    gap: 1.25rem;
-  }
-
-  a {
-    color: #9ee7d8;
+    gap: 1.5rem;
+    min-height: 4.5rem;
+    border-bottom: 1px solid var(--otty-line);
   }
 
   .identity {
     display: inline-flex;
     align-items: center;
     gap: 0.65rem;
-    color: inherit;
+    flex: none;
+    color: var(--otty-text);
+    font-size: 0.9rem;
     font-weight: 700;
+    letter-spacing: 0.08em;
     text-decoration: none;
   }
 
-  main {
-    width: min(46rem, calc(100% - 2.5rem));
-    margin: auto;
+  .identity span::before {
+    color: var(--otty-cyan);
+    content: "./";
+  }
+
+  .site-header nav,
+  .site-footer nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem 1.4rem;
+    font-size: 0.7rem;
+  }
+
+  nav a {
+    color: var(--otty-muted);
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: var(--otty-text);
+  }
+
+  .site-header .nav-download {
+    padding: 0.65rem 0.8rem;
+    border: 1px solid rgb(132 241 234 / 38%);
+    color: var(--otty-cyan-bright);
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    gap: clamp(2rem, 5vw, 6rem);
+    align-items: center;
+    min-height: calc(100vh - 4.5rem);
     padding-block: 5rem;
   }
 
-  .eyebrow {
-    color: #9ee7d8;
+  .hero-copy,
+  .hero-evidence,
+  .capability > * {
+    min-width: 0;
+  }
+
+  .prompt {
+    display: flex;
+    gap: 0.08rem;
+    color: var(--otty-muted);
+    font-size: 0.68rem;
+  }
+
+  .prompt span {
+    color: var(--otty-cyan);
+  }
+
+  .prompt b {
+    color: var(--otty-magenta);
     font-weight: 700;
+  }
+
+  .prompt i {
+    font-style: normal;
+  }
+
+  .release-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 1.5rem;
+    color: var(--otty-muted);
+    font-size: 0.62rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
+  .release-badge i {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--otty-cyan);
+    box-shadow: 0 0 1rem rgb(16 202 195 / 80%);
+  }
+
   h1 {
-    margin: 0;
-    font-size: clamp(4rem, 16vw, 9rem);
-    line-height: 0.9;
+    margin: 1.1rem 0 0;
+    font-size: clamp(3.6rem, 7vw, 7.5rem);
+    letter-spacing: -0.075em;
+    line-height: 0.88;
+  }
+
+  .hero-command {
+    max-width: 10ch;
+    margin: 0.7rem 0 1.6rem;
+    font-size: clamp(2.1rem, 4.1vw, 4.65rem);
+    font-weight: 700;
+    letter-spacing: -0.07em;
+    line-height: 0.94;
+    text-transform: lowercase;
+  }
+
+  .hero-command strong {
+    color: var(--otty-cyan-bright);
+  }
+
+  .hero-command strong span {
+    color: var(--otty-magenta);
+    animation: cursor-blink 1.05s steps(1, end) infinite;
+  }
+
+  @keyframes cursor-blink {
+    0%,
+    44% {
+      opacity: 1;
+    }
+
+    45%,
+    100% {
+      opacity: 0;
+    }
   }
 
   .lede {
-    max-width: 42rem;
-    font-size: clamp(1.35rem, 3vw, 2.15rem);
-    line-height: 1.35;
+    max-width: 40rem;
+    margin: 0;
+    color: var(--otty-muted);
+    font-size: clamp(0.86rem, 1.2vw, 1rem);
+    line-height: 1.75;
   }
 
   .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.7rem;
+    margin-top: 2rem;
   }
 
   .actions a {
-    padding: 0.8rem 1rem;
-    border: 1px solid #3b4a55;
-    border-radius: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--otty-line);
+    color: var(--otty-text);
+    font-size: 0.72rem;
+    font-weight: 700;
     text-decoration: none;
   }
 
-  .actions .primary {
-    border-color: #9ee7d8;
-    background: #9ee7d8;
-    color: #091210;
+  .actions a span {
+    margin-right: 0.45rem;
+    color: var(--otty-magenta);
+  }
+
+  .actions .primary-action {
+    border-color: var(--otty-cyan);
+    background: var(--otty-cyan);
+    color: #031012;
+  }
+
+  .actions .primary-action span {
+    color: #031012;
+  }
+
+  .platforms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: 1rem 0 0;
+    color: var(--otty-muted);
+    font-size: 0.62rem;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .window-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 0.75rem;
+    overflow-wrap: anywhere;
+    border: 1px solid var(--otty-line);
+    border-bottom: 0;
+    color: var(--otty-muted);
+    font-size: 0.56rem;
+  }
+
+  .evidence-frame {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--otty-line);
+    background: #03090c;
+  }
+
+  .evidence-frame::before,
+  .evidence-frame::after {
+    position: absolute;
+    z-index: 1;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-color: var(--otty-magenta);
+    content: "";
+    pointer-events: none;
+  }
+
+  .evidence-frame::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+
+  .evidence-frame::after {
+    right: -1px;
+    bottom: -1px;
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+  }
+
+  .evidence-frame :global(picture),
+  .evidence-frame :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .evidence-frame :global(img) {
+    object-fit: contain;
+  }
+
+  figcaption {
+    margin-top: 0.7rem;
+    color: var(--otty-muted);
+    font-size: 0.65rem;
+    line-height: 1.55;
+  }
+
+  .capabilities {
+    padding-block: 5.5rem 7rem;
+    border-top: 1px solid var(--otty-line);
+  }
+
+  .section-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+    gap: 2rem;
+    align-items: end;
+    margin-bottom: 2.6rem;
+  }
+
+  .section-heading > div {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .section-heading span {
+    color: var(--otty-cyan);
+    font-size: 0.63rem;
+  }
+
+  .section-heading small {
+    color: var(--otty-muted);
+    font-size: 0.56rem;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: clamp(2rem, 4.2vw, 4.5rem);
+    letter-spacing: -0.065em;
+    line-height: 0.95;
+    text-align: right;
+    text-transform: lowercase;
+  }
+
+  h2::before {
+    color: var(--otty-magenta);
+    content: "./";
+  }
+
+  .capability-list {
+    border: 1px solid var(--otty-line);
+    background: rgb(6 13 16 / 64%);
+  }
+
+  .capability {
+    display: grid;
+    grid-template-columns: minmax(0, 0.48fr) minmax(0, 1.52fr);
+    min-width: 0;
+  }
+
+  .capability + .capability {
+    border-top: 1px solid var(--otty-line);
+  }
+
+  .capability-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1.5rem, 4vw, 4rem);
+    border-right: 1px solid var(--otty-line);
+  }
+
+  .capability-index {
+    color: var(--otty-magenta);
+    font-size: 0.68rem;
     font-weight: 700;
+    letter-spacing: 0.12em;
   }
 
-  footer {
-    justify-content: flex-start;
+  h3 {
+    max-width: 13ch;
+    margin: 1rem 0;
+    font-size: clamp(1.65rem, 3vw, 3.35rem);
+    letter-spacing: -0.055em;
+    line-height: 1;
+    text-transform: lowercase;
   }
 
-  @media (max-width: 44rem) {
-    header {
+  h3::before {
+    color: var(--otty-cyan);
+    content: "> ";
+  }
+
+  .capability-copy p {
+    margin: 0;
+    color: var(--otty-muted);
+    font-size: 0.76rem;
+    line-height: 1.7;
+  }
+
+  .capability figure {
+    align-self: center;
+    padding: clamp(1.25rem, 3.5vw, 3.5rem);
+  }
+
+  .site-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 2rem;
+    padding-block: 2rem;
+    border-top: 1px solid var(--otty-line);
+    color: var(--otty-muted);
+    font-size: 0.7rem;
+  }
+
+  .identity-small {
+    font-size: 0.75rem;
+  }
+
+  .site-footer > span:last-child {
+    text-align: right;
+  }
+
+  @media (max-width: 60rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1fr);
+      min-height: auto;
+    }
+
+    .hero-copy {
+      max-width: 44rem;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .site-header,
+    .hero,
+    .capabilities,
+    .site-footer {
+      width: min(100% - 2rem, 90rem);
+    }
+
+    .site-header {
       align-items: flex-start;
       flex-direction: column;
+      padding-block: 1rem;
+    }
+
+    .site-header nav {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .site-header .nav-download {
+      padding: 0;
+      border: 0;
+    }
+
+    .hero {
+      padding-block: 4rem;
+    }
+
+    .section-heading,
+    .capability,
+    .site-footer {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .section-heading {
+      gap: 1.5rem;
+    }
+
+    h2 {
+      text-align: left;
+    }
+
+    .capability-copy {
+      border-right: 0;
+      border-bottom: 1px solid var(--otty-line);
+    }
+
+    .site-footer {
+      gap: 1.2rem;
+    }
+
+    .site-footer nav {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .site-footer > span:last-child {
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 22rem) {
+    .site-header nav {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .actions a {
+      width: 100%;
+    }
+
+    .window-label {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(html) {
+      scroll-behavior: auto;
+    }
+
+    .hero-command strong span {
+      animation: none;
     }
   }
 </style>
