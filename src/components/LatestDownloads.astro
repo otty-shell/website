@@ -1,0 +1,255 @@
+---
+import { releaseData, type InstallationMethod } from "../lib/release-data";
+
+const publicationDate = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "long",
+  timeZone: "UTC",
+}).format(new Date(releaseData.publishedAt));
+const methodGroups = Array.from(new Set(releaseData.methods.map((method) => method.group))).map(
+  (group) => ({
+    group,
+    methods: releaseData.methods
+      .filter((method) => method.group === group)
+      .map((method) => ({ method, presentation: presentInstallationMethod(method) })),
+  }),
+);
+
+function formatByteSize(bytes: number) {
+  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
+  if (bytes >= 1_000) return `${(bytes / 1_000).toFixed(1)} KB`;
+  return `${bytes} B`;
+}
+
+interface InstallationMethodPresentation {
+  detail: string;
+  size: string;
+  actionLabel: string;
+  href?: string;
+  download?: string;
+}
+
+function presentInstallationMethod(method: InstallationMethod): InstallationMethodPresentation {
+  switch (method.kind) {
+    case "release-asset":
+      return {
+        detail: method.filename,
+        size: formatByteSize(method.sizeBytes),
+        actionLabel: "Download",
+        href: method.browser_download_url,
+        download: method.filename,
+      };
+    case "command":
+      return {
+        detail: "Terminal command",
+        size: "",
+        actionLabel: method.command,
+      };
+    case "external":
+      return {
+        detail: "Official destination",
+        size: "",
+        actionLabel: method.destination,
+        href: method.url,
+      };
+  }
+}
+---
+
+<section class="latest-downloads" aria-labelledby="latest-stable-release">
+  <div class="release-summary">
+    <div>
+      <p class="release-label">Latest stable</p>
+      <h2 id="latest-stable-release">v{releaseData.version}</h2>
+      <p>Published <time datetime={releaseData.publishedAt}>{publicationDate}</time></p>
+    </div>
+    <nav aria-label="Release destinations">
+      <a href={releaseData.releaseNotesUrl}>Release notes</a>
+      <a href={releaseData.allReleasesUrl}>All releases</a>
+    </nav>
+  </div>
+
+  {
+    methodGroups.map(({ group, methods }) => (
+      <section class="method-group" aria-labelledby={`installation-methods-${group.toLowerCase()}`}>
+        <h3 id={`installation-methods-${group.toLowerCase()}`}>{group}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Platform</th>
+              <th scope="col">Architecture</th>
+              <th scope="col">Format</th>
+              <th scope="col">Package or method</th>
+              <th scope="col">Size</th>
+              <th scope="col">Get OTTY</th>
+            </tr>
+          </thead>
+          <tbody>
+            {methods.map(({ method, presentation }) => (
+              <tr>
+                <td data-label="Platform">{method.platform}</td>
+                <td data-label="Architecture">{method.architecture}</td>
+                <td data-label="Format">
+                  <code>{method.format}</code>
+                </td>
+                <td data-label="Package or method">
+                  <code>{presentation.detail}</code>
+                </td>
+                <td data-label="Size">{presentation.size}</td>
+                <td data-label="Get OTTY">
+                  {presentation.href ? (
+                    <a href={presentation.href} download={presentation.download}>
+                      {presentation.actionLabel}
+                    </a>
+                  ) : (
+                    <code>{presentation.actionLabel}</code>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    ))
+  }
+</section>
+
+<style>
+  .latest-downloads {
+    margin-block: 2rem;
+    border-block: 1px solid var(--sl-color-gray-5);
+  }
+
+  .release-summary {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-block: 1.25rem;
+  }
+
+  .release-summary :is(p, h2) {
+    margin: 0;
+  }
+
+  .release-label {
+    color: var(--sl-color-accent-high);
+    font-size: var(--sl-text-sm);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .release-summary h2 {
+    margin-block: 0.2rem;
+    font-size: var(--sl-text-3xl);
+  }
+
+  .release-summary nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.65rem 1rem;
+  }
+
+  .method-group {
+    margin-block: 1.5rem;
+  }
+
+  .method-group h3 {
+    margin-block: 0 0.5rem;
+  }
+
+  table {
+    display: table;
+    width: 100%;
+    margin: 0;
+    table-layout: fixed;
+    font-size: var(--sl-text-sm);
+  }
+
+  th,
+  td {
+    padding: 0.65rem;
+    border: 1px solid var(--sl-color-gray-5);
+    overflow-wrap: anywhere;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-white);
+  }
+
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 25%;
+  }
+
+  td code {
+    font-size: 0.82em;
+  }
+
+  @media (max-width: 50rem) {
+    .release-summary {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .release-summary nav {
+      justify-content: flex-start;
+    }
+
+    table,
+    tbody,
+    tr,
+    td {
+      display: block;
+      width: 100%;
+    }
+
+    table {
+      table-layout: auto;
+    }
+
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    tr {
+      margin-block: 0.75rem;
+      border: 1px solid var(--sl-color-gray-5);
+    }
+
+    td {
+      display: grid;
+      grid-template-columns: minmax(7.5rem, 35%) minmax(0, 1fr);
+      gap: 0.75rem;
+      border: 0;
+      border-bottom: 1px solid var(--sl-color-gray-6);
+    }
+
+    td:last-child {
+      border-bottom: 0;
+    }
+
+    td::before {
+      color: var(--sl-color-gray-2);
+      content: attr(data-label);
+      font-weight: 700;
+    }
+  }
+
+  @media (max-width: 25rem) {
+    td {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.2rem;
+    }
+  }
+</style>

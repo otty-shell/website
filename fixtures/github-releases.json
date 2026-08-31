@@ -1,0 +1,47 @@
+[
+  {
+    "tag_name": "v0.3.0",
+    "draft": true,
+    "prerelease": false,
+    "published_at": null,
+    "html_url": "https://github.com/otty-shell/otty/releases/tag/v0.3.0",
+    "assets": []
+  },
+  {
+    "tag_name": "v0.3.0-beta.1",
+    "draft": false,
+    "prerelease": true,
+    "published_at": "2026-08-30T18:00:00Z",
+    "html_url": "https://github.com/otty-shell/otty/releases/tag/v0.3.0-beta.1",
+    "assets": []
+  },
+  {
+    "tag_name": "v0.2.0",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-08-29T16:40:00Z",
+    "html_url": "https://github.com/otty-shell/otty/releases/tag/v0.2.0",
+    "assets": [
+      {
+        "name": "otty_0.2.0_amd64.deb",
+        "size": 10834272,
+        "browser_download_url": "https://github.com/otty-shell/otty/releases/download/v0.2.0/otty_0.2.0_amd64.deb"
+      },
+      {
+        "name": "otty-0.2.0-1.x86_64.rpm",
+        "size": 11272192,
+        "browser_download_url": "https://github.com/otty-shell/otty/releases/download/v0.2.0/otty-0.2.0-1.x86_64.rpm"
+      },
+      {
+        "name": "otty_0.2.0-aarch64-apple-darwin.dmg",
+        "size": 14543872,
+        "browser_download_url": "https://github.com/otty-shell/otty/releases/download/v0.2.0/otty_0.2.0-aarch64-apple-darwin.dmg"
+      },
+      {
+        "name": "otty_0.2.0-x86_64-apple-darwin.dmg",
+        "size": 15122432,
+        "browser_download_url": "https://github.com/otty-shell/otty/releases/download/v0.2.0/otty_0.2.0-x86_64-apple-darwin.dmg"
+      }
+    ]
+  }
+]

@@ -7,7 +7,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, extname, join, relative, resolve } from "node:path";
+import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { createProcessor } from "@mdx-js/mdx";
 import { load as loadYaml } from "js-yaml";
 import {
@@ -62,6 +62,8 @@ for (const sourceFile of sourceFiles) {
   if (!documentationExtensions.has(extname(sourceFile).toLowerCase())) continue;
   validateDocumentationPage(sourceFile);
 }
+
+validateInstallationPage(sourceFiles);
 
 cpSync(publicDocumentationSource, stagedDocumentation, { recursive: true });
 mkdirSync(dirname(documentationStageManifest), { recursive: true });
@@ -124,13 +126,7 @@ function validateDocumentationPage(path) {
 }
 
 function validateMdx(relativePath, body) {
-  let mdxTree;
-
-  try {
-    mdxTree = mdxProcessor.parse(body);
-  } catch (cause) {
-    throw new Error(`${relativePath} contains invalid MDX.`, { cause });
-  }
+  const mdxTree = parseMdx(relativePath, body);
 
   visitMdxNodes(mdxTree, (node) => {
     visitEstreeNodes(node.data?.estree, (estreeNode) => {
@@ -161,6 +157,56 @@ function validateMdx(relativePath, body) {
       );
     }
   });
+}
+
+function validateInstallationPage(sourceFiles) {
+  const installationPage = sourceFiles.find(
+    (path) => relative(publicDocumentationSource, path).split(sep).join("/") === "install.mdx",
+  );
+
+  if (!installationPage) {
+    throw new Error(
+      "install.mdx is required for the authored Installation and Downloads page.",
+    );
+  }
+
+  const contents = readFileSync(installationPage, "utf8").replace(/^\uFEFF/, "");
+  const frontmatterMatch = contents.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
+  const mdxTree = parseMdx("install.mdx", contents.slice(frontmatterMatch?.[0].length ?? 0));
+  const components = [];
+
+  visitMdxNodes(mdxTree, (node) => {
+    if (
+      ["mdxJsxFlowElement", "mdxJsxTextElement"].includes(node.type) &&
+      node.name === "LatestDownloads"
+    ) {
+      components.push(node);
+    }
+  });
+
+  if (components.length !== 1) {
+    throw new Error(
+      `install.mdx must contain exactly one LatestDownloads component; found ${components.length}.`,
+    );
+  }
+
+  if ((components[0].attributes?.length ?? 0) > 0) {
+    throw new Error(
+      "LatestDownloads does not accept authored attributes; release facts come from generated data.",
+    );
+  }
+
+  if ((components[0].children?.length ?? 0) > 0) {
+    throw new Error("LatestDownloads must be empty and self-closing.");
+  }
+}
+
+function parseMdx(relativePath, body) {
+  try {
+    return mdxProcessor.parse(body);
+  } catch (cause) {
+    throw new Error(`${relativePath} contains invalid MDX.`, { cause });
+  }
 }
 
 function throwUnsupportedMdxImport(relativePath) {

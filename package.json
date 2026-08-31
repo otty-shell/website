@@ -7,17 +7,19 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "npm run prepare:docs && npm run build:site",
-    "build:site": "node scripts/verify-documentation-stage.mjs && astro build",
-    "check": "npm run prepare:docs && npm run check:site",
-    "check:site": "node scripts/verify-documentation-stage.mjs && astro check",
-    "dev": "npm run prepare:docs && npm run dev:site",
-    "dev:site": "node scripts/verify-documentation-stage.mjs && astro dev",
+    "build": "npm run prepare:docs && npm run prepare:release && npm run build:site",
+    "build:site": "node scripts/verify-documentation-stage.mjs && node scripts/verify-release-data-stage.mjs && astro build",
+    "check": "npm run prepare:docs && npm run prepare:release && npm run check:site",
+    "check:site": "node scripts/verify-documentation-stage.mjs && node scripts/verify-release-data-stage.mjs && astro check",
+    "dev": "npm run prepare:docs && npm run prepare:release && npm run dev:site",
+    "dev:site": "node scripts/verify-documentation-stage.mjs && node scripts/verify-release-data-stage.mjs && astro dev",
     "prepare:docs": "node scripts/prepare-documentation.mjs",
+    "prepare:release": "node scripts/prepare-release-data.mjs",
     "preview": "astro preview",
     "test": "node --test --test-concurrency=1 tests/*.test.mjs"
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^7.2.4",
     "@astrojs/starlight": "^0.41.10",
     "@mdx-js/mdx": "^3.1.1",
     "astro": "^7.2.9",

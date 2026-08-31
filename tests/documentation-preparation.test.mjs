@@ -69,6 +69,60 @@ test("documentation preparation requires an explicit Public Documentation Source
   assert.match(`${missingPublicTree.stdout}\n${missingPublicTree.stderr}`, /docs[/\\]public/);
 });
 
+test("documentation preparation requires exactly one unconfigured LatestDownloads component", () => {
+  const invalidInstallationPages = [
+    {
+      name: "missing Installation and Downloads page",
+      files: {
+        "index.md": "---\ntitle: Documentation\n---\n",
+      },
+      message: /install\.mdx.*required/i,
+    },
+    {
+      name: "missing LatestDownloads component",
+      files: {
+        "index.md": "---\ntitle: Documentation\n---\n",
+        "install.mdx": "---\ntitle: Installation and Downloads\n---\n\nChoose a package.\n",
+      },
+      message: /exactly one.*LatestDownloads.*found 0/i,
+    },
+    {
+      name: "duplicate LatestDownloads components",
+      files: {
+        "index.md": "---\ntitle: Documentation\n---\n",
+        "install.mdx":
+          "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n\n<LatestDownloads />\n",
+      },
+      message: /exactly one.*LatestDownloads.*found 2/i,
+    },
+    {
+      name: "authored release-specific component values",
+      files: {
+        "index.md": "---\ntitle: Documentation\n---\n",
+        "install.mdx":
+          '---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads version="1.2.3" />\n',
+      },
+      message: /LatestDownloads.*does not accept authored attributes/i,
+    },
+  ];
+
+  for (const invalidPage of invalidInstallationPages) {
+    const ottySource = makeTemporaryDirectory();
+
+    for (const [relativePath, contents] of Object.entries(invalidPage.files)) {
+      writeTestFile(join(ottySource, "docs", "public", relativePath), contents);
+    }
+
+    const preparation = runPreparation(ottySource);
+    assert.notEqual(preparation.status, 0, invalidPage.name);
+    assert.match(
+      `${preparation.stdout}\n${preparation.stderr}`,
+      invalidPage.message,
+      invalidPage.name,
+    );
+  }
+});
+
 test("documentation preparation replaces staging with only the public authoring tree", () => {
   const ottySource = makeTemporaryDirectory();
   const publicSource = join(ottySource, "docs", "public");
@@ -103,6 +157,10 @@ import { Aside } from '@astrojs/starlight/components';
 `,
   );
   writeTestFile(
+    join(publicSource, "install.mdx"),
+    "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n",
+  );
+  writeTestFile(
     join(ottySource, "docs", "internal", "maintainers.md"),
     "internal-only-marker\n",
   );
@@ -121,6 +179,7 @@ import { Aside } from '@astrojs/starlight/components';
     "01-guides/index.md",
     "02-details.mdx",
     "index.md",
+    "install.mdx",
   ]);
   assert.equal(
     readFileSync(join(stagedDocumentation, "01-guides", "diagram.svg"), "utf8"),
@@ -175,6 +234,10 @@ test("documentation preparation rejects pages outside the public authoring contr
     for (const [relativePath, contents] of Object.entries(invalidSource.files)) {
       writeTestFile(join(ottySource, "docs", "public", relativePath), contents);
     }
+    writeTestFile(
+      join(ottySource, "docs", "public", "install.mdx"),
+      "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n",
+    );
 
     const preparation = runPreparation(ottySource);
     assert.notEqual(preparation.status, 0, invalidSource.name);
@@ -191,6 +254,10 @@ test("the site build rejects staging changed after documentation preparation", (
   writeTestFile(
     join(ottySource, "docs", "public", "index.md"),
     "---\ntitle: Documentation\n---\n\nControlled content.\n",
+  );
+  writeTestFile(
+    join(ottySource, "docs", "public", "install.mdx"),
+    "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n",
   );
 
   const preparation = runPreparation(ottySource);

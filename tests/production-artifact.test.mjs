@@ -74,12 +74,22 @@ This distinctive section verifies local search and anchor destinations.
     "---\ntitle: Component Guidance\n---\n\nimport { Aside } from '@astrojs/starlight/components';\n\n<Aside>Approved Starlight MDX remains available.</Aside>\n",
   );
   writeTestFile(
-    join(publicSource, "install.md"),
+    join(publicSource, "install.mdx"),
     `---
 title: Installation and Downloads
 ---
 
-Installation guidance remains at this stable route.
+Choose the package that matches your computer. Apple Silicon means an M1 or newer Mac; Intel Mac
+packages are for Intel-based Macs. Linux x86-64 means an Intel or AMD 64-bit computer.
+
+<LatestDownloads />
+
+Windows is currently unavailable. Linux ARM64 (arm64 or aarch64) is currently unavailable.
+
+## Opening OTTY on macOS
+
+OTTY is not notarized by Apple. After trying to open OTTY once, open **System Settings → Privacy &
+Security**, find the notice that OTTY was blocked, select **Open Anyway**, then confirm **Open**.
 
 [Return to Documentation](/docs/) or the [OTTY Product Landing](/).
 `,
@@ -128,10 +138,17 @@ test("the production artifact contains synchronized Documentation-only search", 
   const ottySource = createPublicDocumentationSource();
 
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+  const localBuildEnvironment = {
+    ...process.env,
+    OTTY_SOURCE_DIR: ottySource,
+    OTTY_RELEASE_SOURCE: "fixture",
+  };
+  delete localBuildEnvironment.CI;
+  delete localBuildEnvironment.GITHUB_ACTIONS;
   const build = spawnSync(npm, ["run", "build"], {
     cwd: repositoryRoot,
     encoding: "utf8",
-    env: { ...process.env, OTTY_SOURCE_DIR: ottySource },
+    env: localBuildEnvironment,
   });
 
   rmSync(ottySource, { recursive: true, force: true });
@@ -180,6 +197,57 @@ test("the production artifact contains synchronized Documentation-only search", 
   assert.match(installation, /href="\/"/);
   assert.match(installation, /href="\/docs\/"/);
   assert.match(installation, /https:\/\/otty\.run\/docs\/install\//);
+  assert.match(installation, /Latest stable/);
+  assert.match(installation, /v0\.2\.0/);
+  assert.match(installation, /August 29, 2026/);
+  assert.match(
+    installation,
+    /href="https:\/\/github\.com\/otty-shell\/otty\/releases\/tag\/v0\.2\.0"[^>]*>Release notes</,
+  );
+  assert.equal(
+    installation.match(
+      /href="https:\/\/github\.com\/otty-shell\/otty\/releases"[^>]*>All releases</g,
+    )?.length,
+    1,
+  );
+
+  const expectedDownloads = [
+    ["Debian or Ubuntu-style Linux", "x86-64", "deb", "otty_0.2.0_amd64.deb", "10.8 MB"],
+    ["RPM-based Linux", "x86-64", "rpm", "otty-0.2.0-1.x86_64.rpm", "11.3 MB"],
+    [
+      "macOS",
+      "Apple Silicon",
+      "dmg",
+      "otty_0.2.0-aarch64-apple-darwin.dmg",
+      "14.5 MB",
+    ],
+    ["macOS", "Intel", "dmg", "otty_0.2.0-x86_64-apple-darwin.dmg", "15.1 MB"],
+  ];
+
+  for (const [platform, architecture, format, filename, roundedSize] of expectedDownloads) {
+    assert.match(installation, new RegExp(platform));
+    assert.match(installation, new RegExp(architecture));
+    assert.match(installation, new RegExp(`>${format}<`, "i"));
+    assert.match(installation, new RegExp(filename.replaceAll(".", "\\.")));
+    assert.match(installation, new RegExp(roundedSize.replace(".", "\\.")));
+    assert.match(
+      installation,
+      new RegExp(
+        `href="https://github\\.com/otty-shell/otty/releases/download/v0\\.2\\.0/${filename.replaceAll(".", "\\.")}"`,
+      ),
+    );
+  }
+
+  assert.match(installation, /Apple Silicon[^<]*M1 or newer/i);
+  assert.match(installation, /Intel-based Macs/i);
+  assert.match(installation, /Linux x86-64[^<]*Intel or AMD 64-bit/i);
+  assert.match(installation, /Windows is currently unavailable/i);
+  assert.match(installation, /Linux ARM64[^<]*currently unavailable/i);
+  assert.match(installation, /not notarized by Apple/i);
+  assert.match(installation, /System Settings/i);
+  assert.match(installation, /Privacy (?:&amp;|&#x26;|&)\s*Security/i);
+  assert.match(installation, /Open Anyway/i);
+  assert.doesNotMatch(installation, /api\.github\.com|Coming soon|disable Gatekeeper|xattr/i);
 
   assert.match(nestedGuide, /<h1[^>]*>Nested Operations<\/h1>/);
   assert.match(nestedGuide, /<img[^>]*alt="Terminal map"/);
