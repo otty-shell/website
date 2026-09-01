@@ -92,8 +92,10 @@ test("production preview requires an explicit Documentation index", () => {
   assert.match(`${preview.stdout}\n${preview.stderr}`, /OTTY_DOCUMENTATION_INDEX.*required/is);
 });
 
-test("production preview requires explicit release input selection", () => {
-  const preview = runProductionPreview(createEnvironment(createPublicDocumentationSource()));
+test("production preview rejects an unsupported release input selection", () => {
+  const preview = runProductionPreview(
+    createEnvironment(createPublicDocumentationSource(), "live"),
+  );
 
   assert.notEqual(preview.status, 0);
   assert.match(`${preview.stdout}\n${preview.stderr}`, /OTTY_RELEASE_SOURCE.*fixture.*github/is);

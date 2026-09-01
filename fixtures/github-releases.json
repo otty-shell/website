@@ -23,14 +23,14 @@
     "html_url": "https://github.com/otty-shell/otty/releases/tag/v0.2.0",
     "assets": [
       {
-        "name": "otty_0.2.0_amd64.deb",
+        "name": "otty_0.2.0-amd64.deb",
         "size": 10834272,
-        "browser_download_url": "https://github.com/otty-shell/otty/releases/download/v0.2.0/otty_0.2.0_amd64.deb"
+        "browser_download_url": "https://github.com/otty-shell/otty/releases/download/v0.2.0/otty_0.2.0-amd64.deb"
       },
       {
-        "name": "otty-0.2.0-1.x86_64.rpm",
+        "name": "otty_0.2.0-x86_64.rpm",
         "size": 11272192,
-        "browser_download_url": "https://github.com/otty-shell/otty/releases/download/v0.2.0/otty-0.2.0-1.x86_64.rpm"
+        "browser_download_url": "https://github.com/otty-shell/otty/releases/download/v0.2.0/otty_0.2.0-x86_64.rpm"
       },
       {
         "name": "otty_0.2.0-aarch64-apple-darwin.dmg",

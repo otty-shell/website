@@ -8,7 +8,7 @@ import {
   releaseDataStageManifest,
 } from "./release-data-stage.mjs";
 
-const releaseSource = process.env.OTTY_RELEASE_SOURCE?.trim();
+const releaseSource = process.env.OTTY_RELEASE_SOURCE?.trim() || "github";
 const ciValue = process.env.CI?.trim().toLowerCase();
 const runningInCi =
   (ciValue !== undefined && !["", "0", "false"].includes(ciValue)) ||
@@ -19,7 +19,7 @@ rmSync(releaseDataStageManifest, { force: true });
 
 if (!new Set(["fixture", "github"]).has(releaseSource)) {
   throw new Error(
-    'OTTY_RELEASE_SOURCE must be set explicitly to "fixture" or "github" for release preparation.',
+    'OTTY_RELEASE_SOURCE must be "fixture" or "github" when set.',
   );
 }
 

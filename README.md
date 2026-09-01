@@ -12,18 +12,19 @@ npm ci
 
 Set `OTTY_DOCUMENTATION_INDEX` to the absolute path of the `index.md` file at the root of the
 intended Public Documentation Source. The website derives the source tree from that file's parent
-directory and does not assume where Documentation lives inside an OTTY checkout. For reproducible
-local development, explicitly select the local-only release fixture with
-`OTTY_RELEASE_SOURCE=fixture`, then start the development server:
+directory and does not assume where Documentation lives inside an OTTY checkout. Local commands
+consume the latest stable Published Release from the public `otty-shell/otty` GitHub Releases API
+by default:
 
 ```sh
-OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md OTTY_RELEASE_SOURCE=fixture npm run dev
+OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md npm run dev
 ```
 
-Set `OTTY_RELEASE_SOURCE=github` to consume the latest stable Published Release from the public
-`otty-shell/otty` GitHub Releases API instead. `GITHUB_TOKEN` is optional for this public request and
-can be supplied to use an authenticated rate limit. The fixture is rejected in CI so production
-builds cannot select it.
+`GITHUB_TOKEN` is optional for this public request and can be supplied to use an authenticated rate
+limit. For tests, offline work, or a reproducible fallback, explicitly select the local-only release
+fixture with `OTTY_RELEASE_SOURCE=fixture`. Live acquisition fails closed instead of automatically
+falling back to potentially stale fixture data. The fixture is rejected in CI so production builds
+cannot select it.
 
 The Product Landing initializes the public GitHub star count to `0` and progressively refreshes it
 in the browser from GitHub's public Repository API. An unavailable, unsuccessful, or malformed API
@@ -39,30 +40,28 @@ imports, scripts, and client directives are rejected during preparation.
 
 ## Production artifact
 
-Prepare and serve the complete production artifact with one command. Select the local-only release
-fixture explicitly for a reproducible local review:
+Prepare and serve the complete production artifact with live Published Release data by default:
+
+```sh
+OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md npm run preview:production
+```
+
+The same command can use the explicit fixture fallback for a reproducible or offline local review:
 
 ```sh
 OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md OTTY_RELEASE_SOURCE=fixture npm run preview:production
-```
-
-For the final launch preview, select the live Published Release input explicitly instead. This mode
-never falls back to the fixture:
-
-```sh
-OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md OTTY_RELEASE_SOURCE=github npm run preview:production
 ```
 
 `preview:production` clears and stages the Public Documentation Source, validates the selected
 release input, builds Astro and Pagefind output, and then prints the local URL serving the completed
 `dist/`. It does not start the Astro development server.
 
-Run checks or produce the artifact without serving it against the same explicit inputs:
+Run checks or produce the artifact without serving it; both use live release data by default:
 
 ```sh
-OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md OTTY_RELEASE_SOURCE=github npm run check
+OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md npm run check
 npm test
-OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md OTTY_RELEASE_SOURCE=github npm run build
+OTTY_DOCUMENTATION_INDEX=/path/to/documentation/index.md npm run build
 ```
 
 The production build is written to `dist/`. Starlight generates the Documentation routes and

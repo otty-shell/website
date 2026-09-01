@@ -562,8 +562,8 @@ test("the production artifact contains the Product Landing and synchronized Docu
   assert.equal(windowsSection.querySelector("a[download], button"), null);
 
   const expectedDownloads = [
-    ["Linux", ".deb", "x64", "otty_0.2.0_amd64.deb"],
-    ["Linux", ".rpm", "x64", "otty-0.2.0-1.x86_64.rpm"],
+    ["Linux", ".deb", "x64", "otty_0.2.0-amd64.deb"],
+    ["Linux", ".rpm", "x64", "otty_0.2.0-x86_64.rpm"],
     ["macOS", ".dmg", "ARM64", "otty_0.2.0-aarch64-apple-darwin.dmg"],
     ["macOS", ".dmg", "Intel", "otty_0.2.0-x86_64-apple-darwin.dmg"],
   ];
@@ -723,7 +723,7 @@ test("the production artifact contains the Product Landing and synchronized Docu
   assert.equal(productLandingSearch.results.length, 0);
 });
 
-test("a live-input build prerenders release facts while stars refresh at runtime", async () => {
+test("a local build defaults to live release facts while stars refresh at runtime", async () => {
   rmSync(artifactPath, { recursive: true, force: true });
   const documentationSource = createPublicDocumentationSource();
   const stableRelease = readStableReleaseFixture(repositoryRoot);
@@ -735,7 +735,6 @@ test("a live-input build prerenders release facts while stars refresh at runtime
         const buildEnvironment = createBuildEnvironment(
           documentationSource.documentationIndex,
           {
-            OTTY_RELEASE_SOURCE: "github",
             OTTY_GITHUB_RELEASES_API_URL: apiUrl,
           },
         );

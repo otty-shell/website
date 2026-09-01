@@ -4,7 +4,7 @@ SHELL := /bin/bash
 NODE_VERSION ?= 22.12.0
 NVM_DIR ?= $(HOME)/.nvm
 OTTY_DOCUMENTATION_INDEX ?= $(abspath ../otty/docs/public/index.md)
-OTTY_RELEASE_SOURCE ?= fixture
+OTTY_RELEASE_SOURCE ?= github
 
 export NVM_DIR
 export OTTY_DOCUMENTATION_INDEX

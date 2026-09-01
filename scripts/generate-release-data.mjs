@@ -57,14 +57,14 @@ export function selectAndValidatePublishedRelease(releases) {
       platform: "Debian or Ubuntu-style Linux",
       architecture: "x86-64",
       format: "deb",
-      filename: `otty_${version}_amd64.deb`,
+      filename: `otty_${version}-amd64.deb`,
     },
     {
       group: "Linux",
       platform: "RPM-based Linux",
       architecture: "x86-64",
       format: "rpm",
-      filename: `otty-${version}-1.x86_64.rpm`,
+      filename: `otty_${version}-x86_64.rpm`,
     },
     {
       group: "macOS",

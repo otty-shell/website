@@ -915,7 +915,7 @@ const capabilities = [
     min-height: 2.1rem;
     padding: 0.45rem 0.6rem;
     border: 1px solid rgb(132 241 234 / 45%);
-    background: rgb(3 9 12 / 88%);
+    background: #03090c;
     color: var(--otty-text);
     cursor: pointer;
     font: inherit;
@@ -941,7 +941,7 @@ const capabilities = [
   .evidence-frame button:focus-visible {
     transform: translateY(-1px);
     border-color: var(--otty-cyan);
-    background: rgb(16 202 195 / 16%);
+    background: #052829;
     color: var(--otty-cyan-bright);
   }
 
@@ -963,7 +963,8 @@ const capabilities = [
 
   h2 {
     margin: 0;
-    font-size: clamp(2rem, 4.2vw, 4.5rem);
+    overflow-wrap: anywhere;
+    font-size: clamp(1.35rem, 4.2vw, 4.5rem);
     letter-spacing: 0;
     line-height: 0.95;
     text-align: right;
@@ -1053,7 +1054,7 @@ const capabilities = [
 
   .capability {
     display: grid;
-    grid-template-columns: minmax(0, 0.48fr) minmax(0, 1.52fr);
+    grid-template-columns: minmax(15rem, 0.55fr) minmax(0, 1.45fr);
     min-width: 0;
   }
 
@@ -1176,6 +1177,15 @@ const capabilities = [
     .hero-copy {
       max-width: 44rem;
     }
+
+    .capability {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .capability-copy {
+      border-right: 0;
+      border-bottom: 1px solid var(--otty-line);
+    }
   }
 
   @media (min-width: 48.0625rem) and (max-height: 48rem) {
@@ -1217,18 +1227,12 @@ const capabilities = [
       padding-block: 4rem;
     }
 
-    .capability,
     .site-footer {
       grid-template-columns: minmax(0, 1fr);
     }
 
     h2 {
       text-align: left;
-    }
-
-    .capability-copy {
-      border-right: 0;
-      border-bottom: 1px solid var(--otty-line);
     }
 
     .sequence-tabs > [role="tablist"] {

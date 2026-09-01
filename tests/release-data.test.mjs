@@ -46,8 +46,8 @@ function release({
 function requiredAssets(version) {
   const tag = `v${version}`;
   const filenames = [
-    `otty_${version}_amd64.deb`,
-    `otty-${version}-1.x86_64.rpm`,
+    `otty_${version}-amd64.deb`,
+    `otty_${version}-x86_64.rpm`,
     `otty_${version}-aarch64-apple-darwin.dmg`,
     `otty_${version}-x86_64-apple-darwin.dmg`,
   ];
@@ -100,9 +100,15 @@ function prepareRelease(source, environmentOverrides = {}) {
 }
 
 function prepareReleaseAsync(source, environmentOverrides = {}) {
-  const environment = { ...process.env, OTTY_RELEASE_SOURCE: source, ...environmentOverrides };
+  const environment = { ...process.env, ...environmentOverrides };
   delete environment.CI;
   delete environment.GITHUB_ACTIONS;
+
+  if (source === undefined) {
+    delete environment.OTTY_RELEASE_SOURCE;
+  } else {
+    environment.OTTY_RELEASE_SOURCE = source;
+  }
 
   return runNpmScriptAsync(repositoryRoot, "prepare:release", environment);
 }
@@ -157,10 +163,10 @@ test("release generation selects the latest published stable release and emits c
         platform: "Debian or Ubuntu-style Linux",
         architecture: "x86-64",
         format: "deb",
-        filename: "otty_1.2.3_amd64.deb",
+        filename: "otty_1.2.3-amd64.deb",
         sizeBytes: 10_000_000,
         browser_download_url:
-          "https://github.com/otty-shell/otty/releases/download/v1.2.3/otty_1.2.3_amd64.deb",
+          "https://github.com/otty-shell/otty/releases/download/v1.2.3/otty_1.2.3-amd64.deb",
       },
       {
         kind: "release-asset",
@@ -168,10 +174,10 @@ test("release generation selects the latest published stable release and emits c
         platform: "RPM-based Linux",
         architecture: "x86-64",
         format: "rpm",
-        filename: "otty-1.2.3-1.x86_64.rpm",
+        filename: "otty_1.2.3-x86_64.rpm",
         sizeBytes: 11_250_000,
         browser_download_url:
-          "https://github.com/otty-shell/otty/releases/download/v1.2.3/otty-1.2.3-1.x86_64.rpm",
+          "https://github.com/otty-shell/otty/releases/download/v1.2.3/otty_1.2.3-x86_64.rpm",
       },
       {
         kind: "release-asset",
@@ -242,7 +248,7 @@ test("release generation rejects invalid direct URLs and byte sizes", () => {
   invalidUrl[0] = {
     ...invalidUrl[0],
     browser_download_url:
-      "https://downloads.example.test/otty/releases/otty_1.2.3_amd64.deb",
+      "https://downloads.example.test/otty/releases/otty_1.2.3-amd64.deb",
   };
   const invalidSize = requiredAssets("1.2.3");
   invalidSize[0] = { ...invalidSize[0], size: 0 };
@@ -269,11 +275,7 @@ test("release generation rejects invalid publication dates and release-notes des
   assert.match(`${invalidDestination.stdout}\n${invalidDestination.stderr}`, /html_url/i);
 });
 
-test("local release preparation requires explicit fixture selection", () => {
-  const implicit = prepareRelease();
-  assert.notEqual(implicit.status, 0);
-  assert.match(`${implicit.stdout}\n${implicit.stderr}`, /OTTY_RELEASE_SOURCE.*fixture/is);
-
+test("local release preparation supports an explicit fixture fallback", () => {
   const unsupported = prepareRelease("live");
   assert.notEqual(unsupported.status, 0);
   assert.match(`${unsupported.stdout}\n${unsupported.stderr}`, /OTTY_RELEASE_SOURCE.*fixture/is);
@@ -287,6 +289,27 @@ test("local release preparation requires explicit fixture selection", () => {
   const data = JSON.parse(readFileSync(generatedReleaseData, "utf8"));
   assert.equal(data.version, "0.2.0");
   assert.equal(data.methods.length, 4);
+});
+
+test("local release preparation defaults to GitHub's latest release", async () => {
+  const stableRelease = readStableReleaseFixture(repositoryRoot);
+
+  await withReleaseApi({ body: JSON.stringify(stableRelease) }, async ({ apiUrl, requests }) => {
+    const preparation = await prepareReleaseAsync(undefined, {
+      OTTY_GITHUB_RELEASES_API_URL: apiUrl,
+    });
+
+    assert.equal(
+      preparation.status,
+      0,
+      `release preparation failed\n\nstdout:\n${preparation.stdout}\n\nstderr:\n${preparation.stderr}`,
+    );
+    assert.equal(requests.length, 1);
+
+    const data = JSON.parse(readFileSync(generatedReleaseData, "utf8"));
+    assert.equal(data.version, "0.2.0");
+    assert.equal(data.methods.length, 4);
+  });
 });
 
 test("local release preparation rejects fixture selection in CI", () => {

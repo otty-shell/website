@@ -14,8 +14,8 @@ GitHub Releases is the durable source for Published Releases and package files. 
 
 Every Published Release has one atomic four-package matrix:
 
-- `otty_<version>_amd64.deb`, built through the Ubuntu 20.04-compatible path for Debian-family Linux on x86-64;
-- `otty-<version>-1.x86_64.rpm` for RPM-family Linux on x86-64;
+- `otty_<version>-amd64.deb`, built through the Ubuntu 20.04-compatible path for Debian-family Linux on x86-64;
+- `otty_<version>-x86_64.rpm` for RPM-family Linux on x86-64;
 - `otty_<version>-aarch64-apple-darwin.dmg` for Apple Silicon;
 - `otty_<version>-x86_64-apple-darwin.dmg` for Intel macOS.
 

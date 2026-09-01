@@ -14,7 +14,7 @@ The visual prototype receives five site-owned, real Product Evidence slots: one 
 
 ## Prototype
 
-The throwaway prototype is in [`prototypes/web-visual-language/`](../../../prototypes/web-visual-language/README.md). Run `python prototypes/web-visual-language/serve.py`, then open the printed local URL. One route provides Landing, Documentation, and Installation views for three structurally different directions selected with `?variant=` or the floating switcher:
+The throwaway prototype is preserved on branch `prototype/otty-web-visual-language` at commit `80b6553ef90d841710ae5931c82b9238396ccf1a`. At that revision, run `python prototypes/web-visual-language/serve.py`, then open the printed local URL. One route provides Landing, Documentation, and Installation views for the structurally different directions selected with `?variant=` or the floating switcher:
 
 - `A` — Signal Ledger;
 - `B` — Open Canvas;
