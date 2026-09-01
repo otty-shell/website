@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
+import { JSDOM } from "jsdom";
 import { assertCapabilitySequenceBehavior } from "./helpers/capability-sequence.mjs";
 import { writeTestFile } from "./helpers/filesystem.mjs";
 import { runNpmScriptAsync } from "./helpers/process.mjs";
@@ -23,6 +24,17 @@ const artifactPath = join(repositoryRoot, "dist");
 const generatedPath = join(repositoryRoot, ".generated");
 const generatedReleaseDataPath = join(generatedPath, "release-data.json");
 const releaseDataStageManifestPath = join(generatedPath, "release-data-stage.json");
+const canonicalOrigin = "https://otty.run";
+const expectedTitleByCanonicalRoute = new Map([
+  ["/", "OTTY — Terminal-first Workspace"],
+  ["/docs/", "Documentation | OTTY Documentation"],
+  ["/docs/01-basics/", "Alphabetical Basics | OTTY Documentation"],
+  ["/docs/02-reference/", "Alphabetical Reference | OTTY Documentation"],
+  ["/docs/03-priority/", "Priority Guide | OTTY Documentation"],
+  ["/docs/04-guides/", "Nested Operations | OTTY Documentation"],
+  ["/docs/05-components/", "Component Guidance | OTTY Documentation"],
+  ["/docs/install/", "Installation and Downloads | OTTY Documentation"],
+]);
 
 function readArtifact(relativePath) {
   return readFileSync(join(artifactPath, relativePath), "utf8");
@@ -36,6 +48,97 @@ function listFiles(directory) {
   return readdirSync(directory, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => join(entry.parentPath, entry.name));
+}
+
+function artifactPathForRoute(route) {
+  return route === "/" ? "index.html" : `${route.slice(1)}index.html`;
+}
+
+function parseArtifactHtml(route) {
+  return new JSDOM(readArtifact(artifactPathForRoute(route)), {
+    url: new URL(route, canonicalOrigin),
+  }).window.document;
+}
+
+function parseArtifactXml(relativePath) {
+  return new JSDOM(readArtifact(relativePath), {
+    contentType: "application/xml",
+  }).window.document;
+}
+
+function assertCrawlablePublicArtifact() {
+  const titles = new Set();
+  const linkedRoutes = new Set();
+  const documentByCanonicalRoute = new Map(
+    [...expectedTitleByCanonicalRoute.keys()].map((route) => [route, parseArtifactHtml(route)]),
+  );
+
+  for (const [route, expectedTitle] of expectedTitleByCanonicalRoute) {
+    const document = documentByCanonicalRoute.get(route);
+    const canonicalUrl = new URL(route, canonicalOrigin).href;
+    const title = document.querySelector("title")?.textContent;
+    const canonicalLinks = document.querySelectorAll('link[rel="canonical"]');
+    const visibleContent = document.querySelector("main")?.textContent.replaceAll(/\s+/g, " ").trim();
+    const noindexDirectives = [...document.head.querySelectorAll("meta")].filter((meta) =>
+      /\bnoindex\b/i.test(meta.getAttribute("content") ?? ""),
+    );
+
+    assert.ok(visibleContent && visibleContent.length >= 20, `${route} has substantive HTML`);
+    assert.equal(title, expectedTitle, `${route} has its authored title`);
+    assert.equal(canonicalLinks.length, 1, `${route} has one canonical link`);
+    assert.equal(canonicalLinks[0].getAttribute("href"), canonicalUrl);
+    assert.equal(noindexDirectives.length, 0, `${route} has no noindex directive`);
+    titles.add(title);
+
+    const internalLinks = [...document.querySelectorAll("a[href]")].filter((anchor) => {
+      const url = new URL(anchor.getAttribute("href"), canonicalUrl);
+      return url.origin === canonicalOrigin;
+    });
+    assert.ok(internalLinks.length > 0, `${route} has ordinary internal links`);
+
+    for (const anchor of internalLinks) {
+      const url = new URL(anchor.getAttribute("href"), canonicalUrl);
+      assert.equal(expectedTitleByCanonicalRoute.has(url.pathname), true, `${url.href} resolves`);
+      assert.doesNotMatch(anchor.getAttribute("rel") ?? "", /\bnofollow\b/i);
+      if (url.hash) {
+        const targetDocument = documentByCanonicalRoute.get(url.pathname);
+        assert.ok(
+          targetDocument.getElementById(decodeURIComponent(url.hash.slice(1))),
+          `${url.href} resolves`,
+        );
+      }
+      linkedRoutes.add(url.pathname);
+    }
+  }
+
+  assert.equal(titles.size, expectedTitleByCanonicalRoute.size);
+  assert.deepEqual([...linkedRoutes].sort(), [...expectedTitleByCanonicalRoute.keys()].sort());
+
+  const productLanding = documentByCanonicalRoute.get("/");
+  assert.equal(
+    productLanding.querySelector('meta[name="description"]')?.getAttribute("content"),
+    "OTTY is an Early Release Terminal-first Workspace for development and operations across local and remote machines.",
+  );
+
+  assert.equal(
+    readArtifact("robots.txt"),
+    "User-agent: *\nAllow: /\n\nSitemap: https://otty.run/sitemap-index.xml\n",
+  );
+
+  const sitemapIndex = parseArtifactXml("sitemap-index.xml");
+  const sitemapLocations = [...sitemapIndex.querySelectorAll("sitemap > loc")].map(
+    (location) => location.textContent,
+  );
+  assert.deepEqual(sitemapLocations, ["https://otty.run/sitemap-0.xml"]);
+
+  const rootSitemap = parseArtifactXml(new URL(sitemapLocations[0]).pathname.slice(1));
+  const sitemapRoutes = [...rootSitemap.querySelectorAll("url > loc")]
+    .map((location) => location.textContent)
+    .sort();
+  const expectedCanonicalUrls = [...expectedTitleByCanonicalRoute.keys()]
+    .map((route) => new URL(route, canonicalOrigin).href)
+    .sort();
+  assert.deepEqual(sitemapRoutes, expectedCanonicalUrls);
 }
 
 function createPublicDocumentationSource() {
@@ -419,6 +522,8 @@ test("the production artifact contains the Product Landing and synchronized Docu
   assert.equal(readArtifact("CNAME"), "otty.run\n");
   assert.equal(existsSync(join(artifactPath, "server")), false);
   assert.equal(existsSync(join(artifactPath, "pagefind", "pagefind.js")), true);
+
+  assertCrawlablePublicArtifact();
 
   const documentationSearch = await searchProductionIndex("glimmerquartz");
   assert.ok(documentationSearch.results.length > 0);
