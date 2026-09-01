@@ -1,0 +1,17 @@
+---
+import DefaultPageSidebar from "@astrojs/starlight/components/PageSidebar.astro";
+
+const { toc } = Astro.locals.starlightRoute;
+const downloadSections = [
+  { depth: 2, slug: "linux", text: "Linux", children: [] },
+  { depth: 2, slug: "macos", text: "macOS", children: [] },
+  { depth: 2, slug: "windows", text: "Windows", children: [] },
+];
+
+if (Astro.url.pathname === "/docs/getting-started/installation/binary/" && toc) {
+  const existingSlugs = new Set(toc.items.map((item) => item.slug));
+  toc.items.push(...downloadSections.filter((item) => !existingSlugs.has(item.slug)));
+}
+---
+
+<DefaultPageSidebar />

@@ -1,37 +1,76 @@
-name: Deploy to GitHub Pages
+name: Deploy synchronized artifacts to GitHub Pages
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout website
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Checkout OTTY
+        uses: actions/checkout@v6
+        with:
+          repository: otty-shell/otty
+          ref: main
+          path: .otty-source
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build synchronized production artifact
+        run: npm run build
+        env:
+          OTTY_DOCUMENTATION_INDEX: ${{ github.workspace }}/.otty-source/docs/public/index.md
+          OTTY_RELEASE_SOURCE: github
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload completed production artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          name: github-pages
+          path: dist
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-      - name: Deploy
+      - name: Deploy completed production artifact
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages

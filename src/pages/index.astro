@@ -1,0 +1,1317 @@
+---
+import "../styles/site.css";
+
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
+const githubUrl = "https://github.com/otty-shell/otty";
+const licenseUrl = `${githubUrl}/blob/main/LICENSE`;
+const productEvidenceUrl = "/assets/product-evidence";
+const heroImage = `${productEvidenceUrl}/hero.png`;
+
+const capabilities = [
+  {
+    slug: "workspace",
+    tabName: "Workspace",
+    title: "Shape your terminal workspace",
+    benefit:
+      "Arrange tabs and splits so parallel sessions stay visible without becoming one long stream.",
+    image: `${productEvidenceUrl}/workspace-poster.png`,
+    video: `${productEvidenceUrl}/workspace.webm`,
+    alt: "OTTY workspace with Claude Code and htop tabs above three split terminal panes.",
+    motionDescription:
+      "A terminal tab is opened, the workspace is divided into multiple panes, and separate Claude Code and htop sessions are started for parallel work.",
+  },
+  {
+    slug: "command-blocks",
+    tabName: "Command blocks",
+    title: "Work with command blocks",
+    benefit:
+      "Treat commands and output as semantic units you can identify, select, and reuse.",
+    image: `${productEvidenceUrl}/command-blocks-poster.png`,
+    video: `${productEvidenceUrl}/command-blocks.webm`,
+    alt: "OTTY terminal with Cargo configuration output grouped into a command block and its action menu open.",
+    motionDescription:
+      "A Cargo configuration file is printed, the resulting command block menu is opened, and a command is copied and reused at the prompt.",
+  },
+  {
+    slug: "explorer",
+    tabName: "Explorer",
+    title: "Keep project files in reach",
+    benefit:
+      "Keep Explorer beside the shell and aligned with the focused session's current directory.",
+    image: `${productEvidenceUrl}/explorer-poster.png`,
+    video: `${productEvidenceUrl}/explorer.webm`,
+    alt: "OTTY Explorer listing the project files beside three split terminal sessions, including a session in the website directory.",
+    motionDescription:
+      "The terminal is split into multiple panes, Explorer is opened, and one session changes directory so the file tree follows its project context.",
+  },
+  {
+    slug: "quick-launch",
+    tabName: "Quick Launch",
+    title: "Launch commands and connections",
+    benefit:
+      "Start saved commands and open interactive SSH Client sessions without rebuilding the same context each time.",
+    image: `${productEvidenceUrl}/quick-launch-poster.png`,
+    video: `${productEvidenceUrl}/quick-launch.webm`,
+    alt: "OTTY Quick Launch editor configuring an SSH connection named laptop while saved SSH and htop entries remain visible.",
+    motionDescription:
+      "A saved SSH connection is created in Quick Launch and then opened as an interactive remote Ubuntu shell session.",
+  },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#071014" />
+    <meta
+      name="description"
+      content="OTTY is an Early Release Terminal-first Workspace for development and operations across local and remote machines."
+    />
+    <link href={canonicalUrl} rel="canonical" />
+    <link href="/assets/logo.svg" rel="icon" type="image/svg+xml" />
+    <title>OTTY — Terminal-first Workspace</title>
+  </head>
+  <body class="landing-page" data-pagefind-ignore>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
+      <a class="identity" href="/" aria-label="OTTY Product Landing">
+        <img src="/assets/logo.svg" alt="" width="145" height="103" />
+      </a>
+      <nav aria-label="Primary navigation">
+        <a
+          class="github-link"
+          href={githubUrl}
+          aria-label="OTTY on GitHub, 0 stars"
+          data-github-link
+        >
+          <svg class="github-mark" viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 3.55c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+            ></path>
+          </svg>
+          <span class="github-stars" aria-hidden="true">
+            <svg viewBox="0 0 16 16">
+              <path d="m8 1.25 2.1 4.25 4.7.68-3.4 3.32.8 4.68L8 11.97l-4.2 2.21.8-4.68-3.4-3.32 4.7-.68L8 1.25Z"></path>
+            </svg>
+            <span data-github-stars-count>0</span>
+          </span>
+        </a>
+        <a class="nav-start" href="/docs/getting-started/installation/binary/">GET STARTED</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="prompt" aria-hidden="true">
+            <span>otty@workspace</span><i>:</i><b>~</b><i>$</i>
+          </div>
+          <div class="release-badge"><i aria-hidden="true"></i> Early Release</div>
+          <h1 id="hero-title">OTTY</h1>
+          <p class="hero-command">Keep terminal work <strong>together<span>_</span></strong></p>
+          <p class="lede">
+            OTTY is a terminal-first workspace for development and operations across local and
+            remote machines.
+          </p>
+          <div class="actions">
+            <a class="primary-action" href="/docs/getting-started/installation/binary/"
+              ><span aria-hidden="true">&gt;</span> download_otty</a
+            >
+            <a href="/docs/"><span aria-hidden="true">&gt;</span> read_docs</a>
+          </div>
+          <p class="platforms" aria-label="Available for Linux and macOS">
+            <span>[ Linux ]</span><span>[ macOS ]</span>
+          </p>
+        </div>
+
+        <figure class="hero-evidence">
+          <div class="evidence-frame">
+            <img
+              src={heroImage}
+              alt="OTTY workspace with Explorer beside four terminal panes showing Claude Code, Git history, Cargo configuration, and htop."
+              width="2077"
+              height="1208"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </div>
+        </figure>
+      </section>
+
+      <section class="capabilities" aria-labelledby="capabilities-title">
+        <div class="section-heading">
+          <h2 id="capabilities-title">current_capabilities</h2>
+        </div>
+
+        <div
+          class="capability-sequence"
+          role="group"
+          aria-label="Current Capabilities sequence"
+          data-capability-sequence
+        >
+          <div class="sequence-status" data-sequence-controls hidden>
+            <span aria-hidden="true" data-sequence-count>01 / 04</span>
+            <i aria-hidden="true"><b data-sequence-progress></b></i>
+            <button
+              type="button"
+              aria-label="Pause automatic capability changes"
+              data-sequence-toggle
+            >pause autoplay</button>
+          </div>
+
+          <div class="capability-list">
+            {
+              capabilities.map((capability, index) => (
+                <article
+                  class="capability"
+                  id={`capability-${capability.slug}`}
+                  role="tabpanel"
+                  aria-labelledby={`capability-tab-${capability.slug}`}
+                  data-capability-panel
+                >
+                  <div class="capability-copy">
+                    <span class="capability-index">0{index + 1}</span>
+                    <h3>{capability.title}</h3>
+                    <p>{capability.benefit}</p>
+                  </div>
+                  <figure>
+                    <div class="evidence-frame">
+                      <img
+                        src={capability.image}
+                        alt={capability.alt}
+                        width="1792"
+                        height="1344"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <video
+                        hidden
+                        muted
+                        loop
+                        playsinline
+                        preload="metadata"
+                        poster={capability.image}
+                        aria-label={`${capability.tabName} capability recording`}
+                        aria-describedby={`capability-description-${capability.slug}`}
+                        data-capability-video
+                      >
+                        <source src={capability.video} type="video/webm" />
+                        Your browser does not support this recording.
+                      </video>
+                      <button
+                        type="button"
+                        hidden
+                        aria-label={`Play ${capability.tabName} recording`}
+                        data-media-toggle
+                      >play recording</button>
+                    </div>
+                    <figcaption id={`capability-description-${capability.slug}`}>
+                      {capability.motionDescription}
+                    </figcaption>
+                  </figure>
+                </article>
+              ))
+            }
+          </div>
+
+          <div class="sequence-tabs" data-sequence-controls hidden>
+            <div role="tablist" aria-label="Current Capabilities">
+              {
+                capabilities.map((capability, index) => (
+                  <button
+                    type="button"
+                    role="tab"
+                    id={`capability-tab-${capability.slug}`}
+                    aria-controls={`capability-${capability.slug}`}
+                    aria-label={capability.tabName}
+                    aria-selected={index === 0 ? "true" : "false"}
+                    tabindex={index === 0 ? "0" : "-1"}
+                    data-capability-tab
+                  >
+                    <span aria-hidden="true">0{index + 1}</span>
+                    {capability.tabName}
+                  </button>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      import { updateGithubStars } from "../lib/github-stars.js";
+
+      void updateGithubStars(document.querySelector("[data-github-link]"));
+    </script>
+
+    <script is:inline>
+      for (const sequence of document.querySelectorAll("[data-capability-sequence]")) {
+        const items = [...sequence.querySelectorAll("[data-capability-tab]")]
+          .map((tab) => {
+            const panelId = tab.getAttribute("aria-controls");
+            const panel = panelId ? document.getElementById(panelId) : null;
+            return {
+              tab,
+              panel,
+              video: panel?.querySelector("[data-capability-video]"),
+              mediaToggle: panel?.querySelector("[data-media-toggle]"),
+            };
+          })
+          .filter(({ panel, video, mediaToggle }) => panel && video && mediaToggle);
+        if (items.length === 0) continue;
+        const sequenceToggle = sequence.querySelector("[data-sequence-toggle]");
+        const mediaProgress = sequence.querySelector("[data-sequence-progress]");
+        const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const manuallyPausedVideos = new Set();
+        const failedVideos = new Set();
+        let reducedMotion = reducedMotionQuery.matches;
+        let selectedIndex = 0;
+        let timerId;
+        let isHovered = false;
+        let hasFocusWithin = false;
+        let isUserPaused = false;
+
+        function updateSequenceToggle() {
+          if (!sequenceToggle) return;
+          sequenceToggle.disabled = reducedMotion;
+          sequenceToggle.setAttribute(
+            "aria-label",
+            reducedMotion || isUserPaused
+              ? "Play automatic capability changes"
+              : "Pause automatic capability changes",
+          );
+          sequenceToggle.textContent = reducedMotion
+            ? "autoplay off: reduced motion"
+            : isUserPaused
+              ? "play autoplay"
+              : "pause autoplay";
+        }
+
+        function updateMediaToggle(index, isPlaying) {
+          const toggle = items[index]?.mediaToggle;
+          const recordingName = items[index]?.tab.getAttribute("aria-label");
+          if (!toggle || !recordingName) return;
+          toggle.setAttribute(
+            "aria-label",
+            `${isPlaying ? "Pause" : "Play"} ${recordingName} recording`,
+          );
+          toggle.textContent = isPlaying ? "pause recording" : "play recording";
+        }
+
+        function updateMediaProgress(video = items[selectedIndex]?.video) {
+          if (!mediaProgress || video !== items[selectedIndex]?.video) return;
+          const duration = video?.duration;
+          const currentTime = video?.currentTime;
+          const percentage =
+            Number.isFinite(duration) && duration > 0 && Number.isFinite(currentTime)
+              ? Math.min(Math.max(currentTime / duration, 0), 1) * 100
+              : 0;
+          mediaProgress.style.width = `${percentage}%`;
+        }
+
+        function playVideo(index) {
+          const video = items[index]?.video;
+          if (!video || failedVideos.has(video)) return;
+          video.hidden = false;
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          updateMediaProgress(video);
+          updateMediaToggle(index, true);
+          const playback = video.play();
+          playback?.catch(() => {
+            video.hidden = true;
+            updateMediaToggle(index, false);
+          });
+        }
+
+        function synchronizeRecordings() {
+          items.forEach(({ video }, videoIndex) => {
+            const isSelected = videoIndex === selectedIndex;
+            if (!isSelected) {
+              if (!video.paused) video.pause();
+              video.hidden = true;
+              return;
+            }
+
+            if (!reducedMotion && !manuallyPausedVideos.has(video)) {
+              if (video.paused) playVideo(videoIndex);
+              else {
+                video.hidden = false;
+                updateMediaToggle(videoIndex, true);
+              }
+            } else {
+              if (!video.paused) video.pause();
+              video.hidden = true;
+              updateMediaToggle(videoIndex, false);
+            }
+          });
+        }
+
+        function stopTimer() {
+          window.clearTimeout(timerId);
+          timerId = undefined;
+        }
+
+        function scheduleNextCapability() {
+          stopTimer();
+          if (reducedMotion || isUserPaused || isHovered || hasFocusWithin) return;
+          timerId = window.setTimeout(() => {
+            selectCapability(selectedIndex + 1, { restartTimer: false });
+            scheduleNextCapability();
+          }, 6000);
+        }
+
+        function selectCapability(index, { restartTimer = true } = {}) {
+          selectedIndex = (index + items.length) % items.length;
+          const selectedVideo = items[selectedIndex]?.video;
+          if (selectedVideo) selectedVideo.currentTime = 0;
+
+          items.forEach(({ tab, panel }, tabIndex) => {
+            const isSelected = tabIndex === selectedIndex;
+            tab.setAttribute("aria-selected", String(isSelected));
+            tab.tabIndex = isSelected ? 0 : -1;
+            panel.hidden = !isSelected;
+          });
+
+          const count = sequence.querySelector("[data-sequence-count]");
+          if (count) {
+            count.textContent = `${String(selectedIndex + 1).padStart(2, "0")} / ${String(items.length).padStart(2, "0")}`;
+          }
+          synchronizeRecordings();
+          updateMediaProgress();
+          if (restartTimer) scheduleNextCapability();
+        }
+
+        items.forEach(({ tab }, tabIndex) => {
+          tab.addEventListener("click", () => selectCapability(tabIndex));
+          tab.addEventListener("keydown", (event) => {
+            let nextIndex;
+            if (event.key === "ArrowLeft") nextIndex = tabIndex - 1;
+            if (event.key === "ArrowRight") nextIndex = tabIndex + 1;
+            if (event.key === "Home") nextIndex = 0;
+            if (event.key === "End") nextIndex = items.length - 1;
+            if (nextIndex === undefined) return;
+            event.preventDefault();
+            selectCapability(nextIndex);
+            items[(nextIndex + items.length) % items.length].tab.focus();
+          });
+        });
+
+        sequence.addEventListener("mouseenter", () => {
+          isHovered = true;
+          stopTimer();
+        });
+        sequence.addEventListener("mouseleave", () => {
+          isHovered = false;
+          scheduleNextCapability();
+        });
+        sequence.addEventListener("focusin", () => {
+          hasFocusWithin = true;
+          stopTimer();
+        });
+        sequence.addEventListener("focusout", (event) => {
+          hasFocusWithin = event.relatedTarget
+            ? sequence.contains(event.relatedTarget)
+            : false;
+          if (!hasFocusWithin) scheduleNextCapability();
+        });
+        sequenceToggle?.addEventListener("click", () => {
+          if (reducedMotion) return;
+          isUserPaused = !isUserPaused;
+          updateSequenceToggle();
+          scheduleNextCapability();
+        });
+
+        items.forEach(({ video, mediaToggle: toggle }, videoIndex) => {
+          toggle.hidden = false;
+          updateMediaToggle(videoIndex, false);
+
+          for (const eventName of ["loadedmetadata", "durationchange", "timeupdate", "seeking"]) {
+            video.addEventListener(eventName, () => updateMediaProgress(video));
+          }
+
+          toggle.addEventListener("click", () => {
+            if (video.paused) {
+              manuallyPausedVideos.delete(video);
+              playVideo(videoIndex);
+            } else {
+              manuallyPausedVideos.add(video);
+              video.pause();
+              updateMediaToggle(videoIndex, false);
+            }
+          });
+
+          const handleVideoFailure = () => {
+            failedVideos.add(video);
+            if (!video.paused) video.pause();
+            video.hidden = true;
+            toggle.hidden = true;
+            updateMediaProgress(video);
+          };
+          video.addEventListener("error", handleVideoFailure);
+          video.querySelectorAll("source").forEach((source) => {
+            source.addEventListener("error", handleVideoFailure);
+          });
+        });
+
+        reducedMotionQuery.addEventListener?.("change", (event) => {
+          reducedMotion = event.matches;
+          updateSequenceToggle();
+          synchronizeRecordings();
+          scheduleNextCapability();
+        });
+
+        sequence.querySelectorAll("[data-sequence-controls]").forEach((control) => {
+          control.hidden = false;
+        });
+        updateSequenceToggle();
+        sequence.dataset.enhanced = "true";
+        selectCapability(0);
+      }
+    </script>
+
+    <footer class="site-footer">
+      <a class="identity identity-small" href="/" aria-label="OTTY Product Landing">
+        <img src="/assets/logo.svg" alt="" width="145" height="103" />
+      </a>
+      <nav aria-label="Footer navigation">
+        <a href="/docs/">Documentation</a>
+        <a href={githubUrl}>GitHub</a>
+        <a href={licenseUrl}>License</a>
+      </nav>
+      <span>© OTTY contributors</span>
+    </footer>
+  </body>
+</html>
+
+<style>
+  :global(*) {
+    box-sizing: border-box;
+  }
+
+  :global(html) {
+    background: var(--otty-page);
+    scroll-behavior: smooth;
+  }
+
+  :global(body.landing-page) {
+    min-width: 0;
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: clip;
+    background: var(--otty-grid-background);
+    background-size: var(--otty-grid-size);
+    color: var(--otty-text);
+  }
+
+  :global(a) {
+    color: inherit;
+  }
+
+  :global(img) {
+    display: block;
+    max-width: 100%;
+  }
+
+  :global(a:focus-visible),
+  :global(button:focus-visible) {
+    outline: 2px solid var(--otty-cyan-bright);
+    outline-offset: 4px;
+  }
+
+  .skip-link {
+    position: fixed;
+    z-index: 10;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.75rem 1rem;
+    transform: translateY(-200%);
+    border: 1px solid var(--otty-cyan);
+    background: var(--otty-page);
+    color: var(--otty-text);
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
+  .site-header,
+  .hero,
+  .capabilities,
+  .site-footer {
+    width: min(90rem, calc(100% - 3rem));
+    margin-inline: auto;
+  }
+
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 4.5rem;
+    border-bottom: 1px solid var(--otty-line);
+  }
+
+  .identity {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex: none;
+    color: var(--otty-text);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+  }
+
+  .identity img {
+    height: auto;
+  }
+
+  .site-header .identity img {
+    width: 2rem;
+  }
+
+  .site-header nav,
+  .site-footer nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem 1.4rem;
+    font-size: 0.7rem;
+  }
+
+  nav a {
+    color: var(--otty-muted);
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: var(--otty-text);
+  }
+
+  .site-header nav {
+    gap: 0.65rem;
+  }
+
+  .site-header nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.6rem;
+    border: 1px solid var(--otty-line);
+    font-weight: 700;
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .site-header nav a:hover,
+  .site-header nav a:focus-visible {
+    transform: translateY(-1px);
+    border-color: var(--otty-cyan);
+    background: var(--otty-cyan);
+    color: #031012;
+  }
+
+  .github-link {
+    gap: 0.45rem;
+    padding: 0.65rem 0.7rem;
+  }
+
+  .site-header .github-link:hover,
+  .site-header .github-link:focus-visible {
+    border-color: rgb(132 241 234 / 55%);
+    background: rgb(132 241 234 / 7%);
+    color: var(--otty-cyan-bright);
+  }
+
+  .github-link svg {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+  }
+
+  .github-link .github-mark {
+    transition: transform 180ms ease;
+  }
+
+  .github-link:hover .github-mark,
+  .github-link:focus-visible .github-mark {
+    transform: rotate(-8deg) scale(1.08);
+  }
+
+  .github-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding-left: 0.45rem;
+    border-left: 1px solid currentColor;
+  }
+
+  .github-stars svg {
+    width: 0.72rem;
+    height: 0.72rem;
+  }
+
+  .site-header .nav-start {
+    padding: 0.65rem 0.8rem;
+    border-color: var(--otty-cyan);
+    background: var(--otty-cyan);
+    color: #031012;
+    letter-spacing: 0.06em;
+  }
+
+  .site-header .nav-start:hover,
+  .site-header .nav-start:focus-visible {
+    background: transparent;
+    color: var(--otty-cyan-bright);
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    gap: clamp(2rem, 5vw, 6rem);
+    align-items: center;
+    min-height: calc(100vh - 4.5rem);
+    padding-block: 5rem;
+  }
+
+  .hero-copy,
+  .hero-evidence,
+  .capability > * {
+    min-width: 0;
+  }
+
+  .prompt {
+    display: flex;
+    gap: 0.08rem;
+    color: var(--otty-muted);
+    font-size: 0.68rem;
+  }
+
+  .prompt span {
+    color: var(--otty-cyan);
+  }
+
+  .prompt b {
+    color: var(--otty-magenta);
+    font-weight: 700;
+  }
+
+  .prompt i {
+    font-style: normal;
+  }
+
+  .release-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 1.5rem;
+    color: var(--otty-muted);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .release-badge i {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--otty-cyan);
+    box-shadow: 0 0 1rem rgb(16 202 195 / 80%);
+  }
+
+  h1 {
+    margin: 1.1rem 0 0;
+    font-size: clamp(3.6rem, 7vw, 7.5rem);
+    letter-spacing: 0;
+    line-height: 0.88;
+  }
+
+  .hero-command {
+    max-width: 10ch;
+    margin: 0.7rem 0 1.6rem;
+    font-size: clamp(2.1rem, 4.1vw, 4.65rem);
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 0.94;
+    text-transform: lowercase;
+  }
+
+  .hero-command strong {
+    color: var(--otty-cyan-bright);
+  }
+
+  .hero-command strong span {
+    color: var(--otty-magenta);
+    animation: cursor-blink 1.05s steps(1, end) infinite;
+  }
+
+  @keyframes cursor-blink {
+    0%,
+    44% {
+      opacity: 1;
+    }
+
+    45%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .lede {
+    max-width: 40rem;
+    margin: 0;
+    color: var(--otty-muted);
+    font-size: clamp(0.86rem, 1.2vw, 1rem);
+    line-height: 1.75;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 2rem;
+  }
+
+  .actions a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--otty-line);
+    color: var(--otty-text);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .actions a span {
+    margin-right: 0.45rem;
+    color: var(--otty-magenta);
+  }
+
+  .actions .primary-action {
+    border-color: var(--otty-cyan);
+    background: var(--otty-cyan);
+    color: #031012;
+  }
+
+  .actions .primary-action span {
+    color: #031012;
+  }
+
+  .actions a:hover,
+  .actions a:focus-visible {
+    transform: translateY(-1px);
+    border-color: var(--otty-text);
+    background: var(--otty-text);
+    color: var(--otty-page);
+  }
+
+  .actions a:hover span,
+  .actions a:focus-visible span {
+    color: inherit;
+  }
+
+  .actions .primary-action:hover,
+  .actions .primary-action:focus-visible {
+    border-color: var(--otty-cyan);
+    background: transparent;
+    color: var(--otty-cyan-bright);
+  }
+
+  .platforms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: 1rem 0 0;
+    color: var(--otty-muted);
+    font-size: 0.62rem;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .evidence-frame {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--otty-line);
+    background: #03090c;
+  }
+
+  .evidence-frame::before,
+  .evidence-frame::after {
+    position: absolute;
+    z-index: 1;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-color: var(--otty-magenta);
+    content: "";
+    pointer-events: none;
+  }
+
+  .evidence-frame::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+
+  .evidence-frame::after {
+    right: -1px;
+    bottom: -1px;
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+  }
+
+  .evidence-frame :global(picture),
+  .evidence-frame :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .evidence-frame :global(img) {
+    object-fit: contain;
+  }
+
+  .evidence-frame video {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #03090c;
+    object-fit: contain;
+  }
+
+  .evidence-frame video[hidden],
+  .evidence-frame button[hidden] {
+    display: none;
+  }
+
+  .evidence-frame button {
+    position: absolute;
+    z-index: 2;
+    right: 0.7rem;
+    bottom: 0.7rem;
+    min-height: 2.1rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid rgb(132 241 234 / 45%);
+    background: #03090c;
+    color: var(--otty-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.56rem;
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .evidence-frame button::before {
+    color: var(--otty-magenta);
+    content: "[ ";
+  }
+
+  .evidence-frame button::after {
+    color: var(--otty-magenta);
+    content: " ]";
+  }
+
+  .evidence-frame button:hover,
+  .evidence-frame button:focus-visible {
+    transform: translateY(-1px);
+    border-color: var(--otty-cyan);
+    background: #052829;
+    color: var(--otty-cyan-bright);
+  }
+
+  figcaption {
+    margin-top: 0.7rem;
+    color: var(--otty-muted);
+    font-size: 0.65rem;
+    line-height: 1.55;
+  }
+
+  .capabilities {
+    padding-block: 5.5rem 7rem;
+    border-top: 1px solid var(--otty-line);
+  }
+
+  .section-heading {
+    margin-bottom: 2.6rem;
+  }
+
+  h2 {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: clamp(1.35rem, 4.2vw, 4.5rem);
+    letter-spacing: 0;
+    line-height: 0.95;
+    text-align: right;
+    text-transform: lowercase;
+  }
+
+  h2::before {
+    color: var(--otty-magenta);
+    content: "./";
+  }
+
+  .sequence-status {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--otty-line);
+    border-bottom: 0;
+    color: var(--otty-muted);
+    font-size: 0.57rem;
+  }
+
+  .sequence-status[hidden],
+  .sequence-tabs[hidden],
+  .capability[hidden] {
+    display: none;
+  }
+
+  .sequence-status > i {
+    height: 1px;
+    background: var(--otty-line);
+  }
+
+  .sequence-status > i b {
+    display: block;
+    width: 0;
+    height: 1px;
+    background: var(--otty-cyan);
+    transition: width 180ms ease;
+  }
+
+  .sequence-status button {
+    padding: 0;
+    overflow-wrap: anywhere;
+    border: 0;
+    background: transparent;
+    color: var(--otty-muted);
+    cursor: pointer;
+    font: inherit;
+    transition:
+      color 180ms ease,
+      text-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .sequence-status button:not(:disabled):hover,
+  .sequence-status button:not(:disabled):focus-visible {
+    transform: translateY(-1px);
+    color: var(--otty-cyan-bright);
+    text-shadow: 0 0 0.75rem rgb(132 241 234 / 35%);
+  }
+
+  .sequence-status button:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+
+  .sequence-status button::before {
+    content: "[ ";
+  }
+
+  .sequence-status button::after {
+    content: " ]";
+  }
+
+  .capability-sequence {
+    width: min(100%, 70rem);
+    margin-inline: auto;
+  }
+
+  .capability-list {
+    border: 1px solid var(--otty-line);
+    background: rgb(6 13 16 / 64%);
+  }
+
+  .capability {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.55fr) minmax(0, 1.45fr);
+    min-width: 0;
+  }
+
+  .capability + .capability {
+    border-top: 1px solid var(--otty-line);
+  }
+
+  .capability-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1.5rem, 4vw, 4rem);
+    border-right: 1px solid var(--otty-line);
+  }
+
+  .capability-index {
+    color: var(--otty-magenta);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  h3 {
+    max-width: 13ch;
+    margin: 1rem 0;
+    font-size: clamp(1.65rem, 3vw, 3.35rem);
+    letter-spacing: 0;
+    line-height: 1;
+    text-transform: lowercase;
+  }
+
+  h3::before {
+    color: var(--otty-cyan);
+    content: "> ";
+  }
+
+  .capability-copy p {
+    margin: 0;
+    color: var(--otty-muted);
+    font-size: 0.76rem;
+    line-height: 1.7;
+  }
+
+  .capability figure {
+    align-self: center;
+    justify-self: center;
+    width: min(100%, 48rem);
+    padding: clamp(1rem, 2vw, 1.75rem);
+  }
+
+  .capability-sequence[data-enhanced="true"] .capability + .capability {
+    border-top: 0;
+  }
+
+  .sequence-tabs {
+    border: 1px solid var(--otty-line);
+    border-top: 0;
+  }
+
+  .sequence-tabs > [role="tablist"] {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .sequence-tabs button {
+    min-width: 0;
+    min-height: 3.5rem;
+    padding: 0.7rem;
+    overflow-wrap: anywhere;
+    border: 0;
+    border-right: 1px solid var(--otty-line);
+    background: transparent;
+    color: var(--otty-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.58rem;
+    text-align: left;
+  }
+
+  .sequence-tabs button:last-child {
+    border-right: 0;
+  }
+
+  .sequence-tabs button span {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--otty-magenta);
+  }
+
+  .sequence-tabs button[aria-selected="true"] {
+    background: rgb(16 202 195 / 8%);
+    color: var(--otty-text);
+  }
+
+  .site-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 2rem;
+    padding-block: 2rem;
+    border-top: 1px solid var(--otty-line);
+    color: var(--otty-muted);
+    font-size: 0.7rem;
+  }
+
+  .identity-small {
+    width: 2rem;
+  }
+
+  .site-footer > span:last-child {
+    text-align: right;
+  }
+
+  @media (max-width: 60rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1fr);
+      min-height: auto;
+    }
+
+    .hero-copy {
+      max-width: 44rem;
+    }
+
+    .capability {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .capability-copy {
+      border-right: 0;
+      border-bottom: 1px solid var(--otty-line);
+    }
+  }
+
+  @media (min-width: 48.0625rem) and (max-height: 48rem) {
+    .capability-copy {
+      padding: 1.5rem;
+    }
+
+    .capability figure {
+      width: min(100%, 42rem);
+      padding-block: 1rem;
+    }
+
+    h3 {
+      font-size: clamp(1.65rem, 2.4vw, 2.5rem);
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .site-header,
+    .hero,
+    .capabilities,
+    .site-footer {
+      width: min(100% - 2rem, 90rem);
+    }
+
+    .site-header {
+      align-items: flex-start;
+      flex-direction: column;
+      padding-block: 1rem;
+    }
+
+    .site-header nav {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .hero {
+      padding-block: 4rem;
+    }
+
+    .site-footer {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    h2 {
+      text-align: left;
+    }
+
+    .sequence-tabs > [role="tablist"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sequence-tabs button:nth-child(2) {
+      border-right: 0;
+    }
+
+    .sequence-tabs button:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--otty-line);
+    }
+
+    .site-footer {
+      gap: 1.2rem;
+    }
+
+    .site-footer nav {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .site-footer > span:last-child {
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 22rem) {
+    .site-header nav {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .actions a {
+      width: 100%;
+    }
+
+    .sequence-status {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .sequence-status button {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(html) {
+      scroll-behavior: auto;
+    }
+
+    .hero-command strong span {
+      animation: none;
+    }
+
+    .sequence-status > i b {
+      transition: none;
+    }
+
+    .site-header nav a,
+    .actions a,
+    .github-link .github-mark,
+    .evidence-frame button,
+    .sequence-status button {
+      transition: none;
+    }
+
+    .site-header nav a:hover,
+    .site-header nav a:focus-visible,
+    .actions a:hover,
+    .actions a:focus-visible,
+    .github-link:hover .github-mark,
+    .github-link:focus-visible .github-mark,
+    .evidence-frame button:hover,
+    .evidence-frame button:focus-visible,
+    .sequence-status button:not(:disabled):hover,
+    .sequence-status button:not(:disabled):focus-visible {
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,21 @@
+---
+const { siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<a href={siteTitleHref} class="otty-docs-title" aria-label="OTTY Product Landing">
+  <img src="/assets/logo.svg" alt="" width="145" height="103" />
+</a>
+
+<style>
+  .otty-docs-title {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  .otty-docs-title img {
+    width: 2rem;
+    height: auto;
+    flex: none;
+  }
+</style>
