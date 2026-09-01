@@ -33,8 +33,25 @@ are rejected during preparation.
 
 ## Production artifact
 
-Run the checks and production build against the same explicit Public Documentation Source and live
-Published Release data:
+Prepare and serve the complete production artifact with one command. Select the local-only release
+fixture explicitly for a reproducible local review:
+
+```sh
+OTTY_SOURCE_DIR=/path/to/otty OTTY_RELEASE_SOURCE=fixture npm run preview:production
+```
+
+For the final launch preview, select the live Published Release input explicitly instead. This mode
+never falls back to the fixture:
+
+```sh
+OTTY_SOURCE_DIR=/path/to/otty OTTY_RELEASE_SOURCE=github npm run preview:production
+```
+
+`preview:production` clears and stages the Public Documentation Source, validates the selected
+release input, builds Astro and Pagefind output, and then prints the local URL serving the completed
+`dist/`. It does not start the Astro development server.
+
+Run checks or produce the artifact without serving it against the same explicit inputs:
 
 ```sh
 OTTY_SOURCE_DIR=/path/to/otty OTTY_RELEASE_SOURCE=github npm run check
@@ -45,4 +62,4 @@ OTTY_SOURCE_DIR=/path/to/otty OTTY_RELEASE_SOURCE=github npm run build
 The production build is written to `dist/`. Starlight generates the Documentation routes and
 sidebar from the staged filesystem, validated release facts are rendered into static HTML, and then
 Pagefind indexes the completed artifact. Documentation staging and generated release data are
-ignored by Git. Inspect `dist/` locally with `npm run preview`.
+ignored by Git, as are generated image variants, Pagefind assets, and the rest of `dist/`.

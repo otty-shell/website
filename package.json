@@ -16,6 +16,7 @@
     "prepare:docs": "node scripts/prepare-documentation.mjs",
     "prepare:release": "node scripts/prepare-release-data.mjs",
     "preview": "astro preview",
+    "preview:production": "npm run build && npm run preview --",
     "test": "node --test --test-concurrency=1 tests/*.test.mjs"
   },
   "dependencies": {
