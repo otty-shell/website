@@ -7,7 +7,16 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, extname, join, relative, resolve, sep } from "node:path";
+import {
+  basename,
+  dirname,
+  extname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 import { createProcessor } from "@mdx-js/mdx";
 import { load as loadYaml } from "js-yaml";
 import {
@@ -26,37 +35,44 @@ const documentationExtensions = new Set([
   ".mdx",
 ]);
 const supportedMdxImport = "@astrojs/starlight/components";
+const binaryInstallationPage = "Getting Started/Installation/Binary.mdx";
 const mdxProcessor = createProcessor();
 
-const sourceDirectoryInput = process.env.OTTY_SOURCE_DIR?.trim();
+const documentationIndexInput = process.env.OTTY_DOCUMENTATION_INDEX?.trim();
 
-if (!sourceDirectoryInput) {
-  throw new Error("OTTY_SOURCE_DIR is required to prepare the Public Documentation Source.");
+if (!documentationIndexInput) {
+  throw new Error(
+    "OTTY_DOCUMENTATION_INDEX is required to prepare the Public Documentation Source.",
+  );
 }
 
-const publicDocumentationSource = resolve(sourceDirectoryInput, "docs", "public");
+if (!isAbsolute(documentationIndexInput)) {
+  throw new Error("OTTY_DOCUMENTATION_INDEX must be an absolute path to index.md.");
+}
+
+const documentationIndex = resolve(documentationIndexInput);
+
+if (basename(documentationIndex) !== "index.md") {
+  throw new Error("OTTY_DOCUMENTATION_INDEX must point to a file named index.md.");
+}
+
+const publicDocumentationSource = dirname(documentationIndex);
 
 rmSync(stagedDocumentation, { recursive: true, force: true });
 rmSync(documentationStageManifest, { force: true });
 
 try {
-  if (!statSync(publicDocumentationSource).isDirectory()) {
-    throw new Error("not a directory");
+  if (!statSync(documentationIndex).isFile()) {
+    throw new Error("not a file");
   }
 } catch (cause) {
   throw new Error(
-    `Public Documentation Source not found at ${publicDocumentationSource}. Expected OTTY_SOURCE_DIR/docs/public.`,
+    `Documentation index not found at ${documentationIndex}. OTTY_DOCUMENTATION_INDEX must point to the Public Documentation Source index.md.`,
     { cause },
   );
 }
 
 const sourceFiles = listSourceFiles(publicDocumentationSource);
-
-if (!sourceFiles.some((path) => relative(publicDocumentationSource, path) === "index.md")) {
-  throw new Error(
-    "The Public Documentation Source must contain index.md for the Documentation index.",
-  );
-}
 
 for (const sourceFile of sourceFiles) {
   if (!documentationExtensions.has(extname(sourceFile).toLowerCase())) continue;
@@ -161,18 +177,23 @@ function validateMdx(relativePath, body) {
 
 function validateInstallationPage(sourceFiles) {
   const installationPage = sourceFiles.find(
-    (path) => relative(publicDocumentationSource, path).split(sep).join("/") === "install.mdx",
+    (path) =>
+      relative(publicDocumentationSource, path).split(sep).join("/") ===
+      binaryInstallationPage,
   );
 
   if (!installationPage) {
     throw new Error(
-      "install.mdx is required for the authored Installation and Downloads page.",
+      `${binaryInstallationPage} is required for the authored Binary installation page.`,
     );
   }
 
   const contents = readFileSync(installationPage, "utf8").replace(/^\uFEFF/, "");
   const frontmatterMatch = contents.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
-  const mdxTree = parseMdx("install.mdx", contents.slice(frontmatterMatch?.[0].length ?? 0));
+  const mdxTree = parseMdx(
+    binaryInstallationPage,
+    contents.slice(frontmatterMatch?.[0].length ?? 0),
+  );
   const components = [];
 
   visitMdxNodes(mdxTree, (node) => {
@@ -186,7 +207,7 @@ function validateInstallationPage(sourceFiles) {
 
   if (components.length !== 1) {
     throw new Error(
-      `install.mdx must contain exactly one LatestDownloads component; found ${components.length}.`,
+      `${binaryInstallationPage} must contain exactly one LatestDownloads component; found ${components.length}.`,
     );
   }
 

@@ -6,7 +6,7 @@
 
 **Status:** resolved
 
-- [x] A locked dependency installation followed by the production build emits prerendered HTML for `/`, `/docs/`, and `/docs/install/` and does not require SSR, an application backend, a client-side router, or an SPA shell.
+- [x] A locked dependency installation followed by the production build emits prerendered HTML for `/`, `/docs/`, and `/docs/getting-started/installation/binary/` and does not require SSR, an application backend, a client-side router, or an SPA shell.
 - [x] The site is configured for `https://otty.run` without a repository base path, and the completed artifact preserves the custom-domain declaration needed by GitHub Pages.
 - [x] Ordinary links connect the OTTY identity and the three canonical routes, and the existing OTTY name and logo assets remain available to the generated site.
 - [x] Primary route content and navigation remain present in generated HTML before client JavaScript runs.

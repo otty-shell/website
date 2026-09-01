@@ -33,7 +33,10 @@ const expectedTitleByCanonicalRoute = new Map([
   ["/docs/03-priority/", "Priority Guide | OTTY Documentation"],
   ["/docs/04-guides/", "Nested Operations | OTTY Documentation"],
   ["/docs/05-components/", "Component Guidance | OTTY Documentation"],
-  ["/docs/install/", "Installation and Downloads | OTTY Documentation"],
+  [
+    "/docs/getting-started/installation/binary/",
+    "Binary | OTTY Documentation",
+  ],
 ]);
 
 function readArtifact(relativePath) {
@@ -142,11 +145,12 @@ function assertCrawlablePublicArtifact() {
 }
 
 function createPublicDocumentationSource() {
-  const ottySource = mkdtempSync(join(tmpdir(), "otty-website-artifact-"));
-  const publicSource = join(ottySource, "docs", "public");
+  const sourceRoot = mkdtempSync(join(tmpdir(), "otty-website-artifact-"));
+  const publicSource = join(sourceRoot, "relocated", "public-manual");
+  const documentationIndex = join(publicSource, "index.md");
 
   writeTestFile(
-    join(publicSource, "index.md"),
+    documentationIndex,
     `---
 title: Documentation
 ---
@@ -185,38 +189,30 @@ This distinctive section verifies local search and anchor destinations.
     "---\ntitle: Component Guidance\n---\n\nimport { Aside } from '@astrojs/starlight/components';\n\n<Aside>Approved Starlight MDX remains available.</Aside>\n",
   );
   writeTestFile(
-    join(publicSource, "install.mdx"),
+    join(publicSource, "Getting Started", "Installation", "Binary.mdx"),
     `---
-title: Installation and Downloads
+title: Binary
 ---
 
-Choose the package that matches your computer. Apple Silicon means an M1 or newer Mac; Intel Mac
-packages are for Intel-based Macs. Linux x86-64 means an Intel or AMD 64-bit computer.
+Choose the package that matches your computer.
 
 <LatestDownloads />
-
-Windows is currently unavailable. Linux ARM64 (arm64 or aarch64) is currently unavailable.
-
-## Opening OTTY on macOS
-
-OTTY is not notarized by Apple. After trying to open OTTY once, open **System Settings → Privacy &
-Security**, find the notice that OTTY was blocked, select **Open Anyway**, then confirm **Open**.
 
 [Return to Documentation](/docs/) or the [OTTY Product Landing](/).
 `,
   );
   writeTestFile(
-    join(ottySource, "docs", "internal", "secrets.md"),
+    join(sourceRoot, "unrelated", "internal", "secrets.md"),
     "artifact-internal-marker\n",
   );
 
-  return ottySource;
+  return { sourceRoot, documentationIndex };
 }
 
-function createBuildEnvironment(ottySource, releaseEnvironment) {
+function createBuildEnvironment(documentationIndex, releaseEnvironment) {
   const environment = {
     ...process.env,
-    OTTY_SOURCE_DIR: ottySource,
+    OTTY_DOCUMENTATION_INDEX: documentationIndex,
     ...releaseEnvironment,
   };
   delete environment.CI;
@@ -257,19 +253,20 @@ async function searchProductionIndex(query) {
 
 test("the production artifact contains the Product Landing and synchronized Documentation-only search", async () => {
   rmSync(artifactPath, { recursive: true, force: true });
-  const ottySource = createPublicDocumentationSource();
+  const documentationSource = createPublicDocumentationSource();
 
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-  const localBuildEnvironment = createBuildEnvironment(ottySource, {
-    OTTY_RELEASE_SOURCE: "fixture",
-  });
+  const localBuildEnvironment = createBuildEnvironment(
+    documentationSource.documentationIndex,
+    { OTTY_RELEASE_SOURCE: "fixture" },
+  );
   const build = spawnSync(npm, ["run", "build"], {
     cwd: repositoryRoot,
     encoding: "utf8",
     env: localBuildEnvironment,
   });
 
-  rmSync(ottySource, { recursive: true, force: true });
+  rmSync(documentationSource.sourceRoot, { recursive: true, force: true });
 
   assert.equal(
     build.status,
@@ -279,7 +276,9 @@ test("the production artifact contains the Product Landing and synchronized Docu
 
   const landing = htmlBeforeClientJavaScript("index.html");
   const documentation = htmlBeforeClientJavaScript("docs/index.html");
-  const installation = htmlBeforeClientJavaScript("docs/install/index.html");
+  const installation = htmlBeforeClientJavaScript(
+    "docs/getting-started/installation/binary/index.html",
+  );
   const nestedGuide = htmlBeforeClientJavaScript("docs/04-guides/index.html");
 
   assert.match(landing, /<h1[^>]*>\s*OTTY\s*<\/h1>/);
@@ -294,12 +293,19 @@ test("the production artifact contains the Product Landing and synchronized Docu
 
   const landingHeader = landing.match(/<header\b[\s\S]*?<\/header>/)?.[0];
   assert.ok(landingHeader);
-  assert.match(landingHeader, /href="\/"[^>]*>[\s\S]*?OTTY/);
-  assert.match(landingHeader, /href="\/docs\/"[^>]*>Documentation/);
-  assert.match(landingHeader, /href="https:\/\/github\.com\/otty-shell\/otty"[^>]*>GitHub/);
+  assert.match(landingHeader, /href="\/"[^>]*aria-label="OTTY Product Landing"/);
+  assert.match(landingHeader, /src="\/assets\/logo\.svg"/);
+  assert.doesNotMatch(landingHeader, /<span>\s*OTTY\s*<\/span>/);
+  assert.doesNotMatch(landingHeader, /href="\/docs\/"[^>]*>Documentation/);
   assert.match(
     landingHeader,
-    /href="\/docs\/install\/"[^>]*>Installation and Downloads/,
+    /href="https:\/\/github\.com\/otty-shell\/otty"[^>]*aria-label="OTTY on GitHub, 0 stars"[^>]*data-github-link/,
+  );
+  assert.match(landingHeader, /data-github-stars-count[^>]*>0<\/span>/);
+  assert.equal(landingHeader.match(/<svg\b/g)?.length, 2);
+  assert.match(
+    landingHeader,
+    /href="\/docs\/getting-started\/installation\/binary\/"[^>]*>GET STARTED/,
   );
 
   const landingMain = landing.match(/<main\b[\s\S]*?<\/main>/)?.[0];
@@ -307,8 +313,13 @@ test("the production artifact contains the Product Landing and synchronized Docu
   assert.match(landingMain, /Early Release/);
   assert.match(landingMain, /Linux/);
   assert.match(landingMain, /macOS/);
-  assert.match(landingMain, /href="\/docs\/install\/"[^>]*>[\s\S]*?Download OTTY/);
-  assert.match(landingMain, /href="\/docs\/"[^>]*>[\s\S]*?Read docs/);
+  assert.match(
+    landingMain,
+    /href="\/docs\/getting-started\/installation\/binary\/"[^>]*>[\s\S]*?download_otty/,
+  );
+  assert.match(landingMain, /href="\/docs\/"[^>]*>[\s\S]*?read_docs/);
+  assert.match(landingMain, /<h2[^>]*>current_capabilities<\/h2>/);
+  assert.doesNotMatch(landingMain, /otty capabilities\.list|4 entries \/ latest Published Release/);
 
   const capabilityContent = [
     [
@@ -386,10 +397,16 @@ test("the production artifact contains the Product Landing and synchronized Docu
   for (const alternative of evidenceAlternatives) {
     assert.match(landing, new RegExp(`alt="${alternative.replaceAll(".", "\\.")}"`));
   }
-  assert.equal(landing.match(/<picture\b/g)?.length, 5);
-  assert.equal(landing.match(/type="image\/avif"/g)?.length, 5);
-  assert.equal(landing.match(/type="image\/webp"/g)?.length, 5);
-  assert.equal(landing.match(/<img\b(?=[^>]*\bsrc="[^"]+\.png")/g)?.length, 5);
+  assert.equal(landingMain.match(/<img\b(?=[^>]*\bsrc="[^"]+\.png")/g)?.length, 5);
+  for (const image of [
+    "hero.png",
+    "workspace-poster.png",
+    "command-blocks-poster.png",
+    "explorer-poster.png",
+    "quick-launch-poster.png",
+  ]) {
+    assert.match(landing, new RegExp(`src="/assets/product-evidence/${image.replaceAll(".", "\\.")}"`));
+  }
   assert.match(landing, /<img\b(?=[^>]*\bwidth="2077")(?=[^>]*\bheight="1208")[^>]*>/);
   assert.equal(
     landing.match(/<img\b(?=[^>]*\bwidth="1792")(?=[^>]*\bheight="1344")[^>]*>/g)
@@ -400,6 +417,8 @@ test("the production artifact contains the Product Landing and synchronized Docu
   const landingFooter = landing.match(/<footer\b[\s\S]*?<\/footer>/)?.[0];
   assert.ok(landingFooter);
   assert.match(landingFooter, /OTTY/);
+  assert.match(landingFooter, /src="\/assets\/logo\.svg"/);
+  assert.doesNotMatch(landingFooter, /<span>\s*OTTY\s*<\/span>/);
   assert.match(landingFooter, /href="\/docs\/"[^>]*>Documentation/);
   assert.match(landingFooter, /href="https:\/\/github\.com\/otty-shell\/otty"[^>]*>GitHub/);
   assert.match(
@@ -411,7 +430,7 @@ test("the production artifact contains the Product Landing and synchronized Docu
 
   assert.match(landing, /href="\/"[^>]*>[\s\S]*?OTTY/);
   assert.match(landing, /href="\/docs\/"/);
-  assert.match(landing, /href="\/docs\/install\/"/);
+  assert.match(landing, /href="\/docs\/getting-started\/installation\/binary\/"/);
   assert.match(landing, /href="https:\/\/otty\.run\/"[^>]*rel="canonical"/);
   assert.match(landing, /<body[^>]*data-pagefind-ignore/);
 
@@ -420,13 +439,50 @@ test("the production artifact contains the Product Landing and synchronized Docu
   assert.match(documentation, /id="glimmerquartz-synchronization"/);
   assert.match(documentation, /data-pagefind-body/);
   assert.match(documentation, /href="\/"/);
-  assert.match(documentation, /href="\/docs\/install\/"/);
+  assert.match(documentation, /href="\/docs\/getting-started\/installation\/binary\/"/);
   assert.match(documentation, /https:\/\/otty\.run\/docs\//);
   assert.match(documentation, /Skip to content/i);
   assert.match(documentation, /<header\b/i);
   assert.match(documentation, /<main\b/i);
   assert.match(documentation, /<nav\b/i);
   assert.match(documentation, /Search/i);
+
+  const documentationPage = parseArtifactHtml("/docs/");
+  const documentationHeader = documentationPage.querySelector("header");
+  assert.ok(documentationHeader);
+  assert.equal(documentationPage.documentElement.dataset.theme, "dark");
+  assert.equal(
+    documentationPage.querySelector('meta[name="color-scheme"]')?.getAttribute("content"),
+    "dark",
+  );
+  assert.equal(documentationPage.querySelector("starlight-theme-select"), null);
+  assert.equal(
+    documentationHeader.querySelector('a[href="/"]')?.getAttribute("aria-label"),
+    "OTTY Product Landing",
+  );
+  assert.equal(documentationHeader.querySelector('a[href="/"] span'), null);
+  assert.equal(
+    documentationHeader.querySelector('a[href="/"] img')?.getAttribute("src"),
+    "/assets/logo.svg",
+  );
+
+  const documentationSidebar = documentationPage.querySelector(
+    "#starlight__sidebar ul.top-level",
+  );
+  assert.ok(documentationSidebar);
+  assert.ok(
+    [...documentationSidebar.children].some((item) =>
+      item.querySelector(':scope > a[href="/docs/"]'),
+    ),
+    "the Documentation index is a root sidebar item",
+  );
+  assert.equal(
+    [...documentationSidebar.children].some(
+      (item) => item.querySelector(":scope > details > summary")?.textContent.trim() === "Docs",
+    ),
+    false,
+    "the staged docs directory does not add a redundant Docs sidebar group",
+  );
 
   const priorityPosition = documentation.indexOf('href="/docs/03-priority/"');
   const basicsPosition = documentation.indexOf('href="/docs/01-basics/"');
@@ -436,10 +492,13 @@ test("the production artifact contains the Product Landing and synchronized Docu
   assert.match(documentation, /href="\/docs\/03-priority\/"[^>]*>[\s\S]*?Priority Guide/);
   assert.match(documentation, /href="\/docs\/01-basics\/"[^>]*>[\s\S]*?Alphabetical Basics/);
 
-  assert.match(installation, /<h1[^>]*>Installation and Downloads<\/h1>/);
+  assert.match(installation, /<h1[^>]*>Binary<\/h1>/);
   assert.match(installation, /href="\/"/);
   assert.match(installation, /href="\/docs\/"/);
-  assert.match(installation, /https:\/\/otty\.run\/docs\/install\//);
+  assert.match(
+    installation,
+    /https:\/\/otty\.run\/docs\/getting-started\/installation\/binary\//,
+  );
   assert.match(installation, /Latest stable/);
   assert.match(installation, /v0\.2\.0/);
   assert.match(installation, /August 29, 2026/);
@@ -454,43 +513,109 @@ test("the production artifact contains the Product Landing and synchronized Docu
     1,
   );
 
-  const expectedDownloads = [
-    ["Debian or Ubuntu-style Linux", "x86-64", "deb", "otty_0.2.0_amd64.deb", "10.8 MB"],
-    ["RPM-based Linux", "x86-64", "rpm", "otty-0.2.0-1.x86_64.rpm", "11.3 MB"],
-    [
-      "macOS",
-      "Apple Silicon",
-      "dmg",
-      "otty_0.2.0-aarch64-apple-darwin.dmg",
-      "14.5 MB",
-    ],
-    ["macOS", "Intel", "dmg", "otty_0.2.0-x86_64-apple-darwin.dmg", "15.1 MB"],
+  const installationPage = parseArtifactHtml(
+    "/docs/getting-started/installation/binary/",
+  );
+  const platformSections = [
+    ...installationPage.querySelectorAll(".platform-sections > .platform-section"),
   ];
-
-  for (const [platform, architecture, format, filename, roundedSize] of expectedDownloads) {
-    assert.match(installation, new RegExp(platform));
-    assert.match(installation, new RegExp(architecture));
-    assert.match(installation, new RegExp(`>${format}<`, "i"));
-    assert.match(installation, new RegExp(filename.replaceAll(".", "\\.")));
-    assert.match(installation, new RegExp(roundedSize.replace(".", "\\.")));
-    assert.match(
-      installation,
-      new RegExp(
-        `href="https://github\\.com/otty-shell/otty/releases/download/v0\\.2\\.0/${filename.replaceAll(".", "\\.")}"`,
-      ),
+  assert.deepEqual(
+    platformSections.map((section) => section.querySelector("h2")?.textContent.trim()),
+    ["Linux", "macOS", "Windows"],
+  );
+  assert.deepEqual(
+    platformSections.map((section) => section.querySelector("h2")?.id),
+    ["linux", "macos", "windows"],
+  );
+  assert.equal(installationPage.querySelector(".platform-index"), null);
+  for (const slug of ["linux", "macos", "windows"]) {
+    assert.ok(
+      installationPage.querySelector(`.platform-section a.section-anchor[href="#${slug}"]`),
+      `${slug} exposes a section permalink`,
+    );
+    assert.equal(
+      installationPage.querySelectorAll(`starlight-toc a[href="#${slug}"]`).length,
+      1,
+      `${slug} appears once in the desktop table of contents`,
+    );
+    assert.equal(
+      installationPage.querySelectorAll(`mobile-starlight-toc a[href="#${slug}"]`).length,
+      1,
+      `${slug} appears once in the mobile table of contents`,
+    );
+    assert.equal(
+      documentationPage.querySelector(`starlight-toc a[href="#${slug}"]`),
+      null,
+      `${slug} does not leak into another page's table of contents`,
     );
   }
+  assert.equal(installationPage.querySelector(".latest-downloads table"), null);
+  assert.equal(
+    installationPage.querySelectorAll(".platform-section a[download]").length,
+    4,
+  );
+  const windowsSection = platformSections.find(
+    (section) => section.querySelector("h2")?.textContent.trim() === "Windows",
+  );
+  assert.ok(windowsSection);
+  assert.match(windowsSection.textContent, /Windows[\s\S]*Coming soon/i);
+  assert.equal(windowsSection.querySelector("a[download], button"), null);
+
+  const expectedDownloads = [
+    ["Linux", ".deb", "x64", "otty_0.2.0_amd64.deb"],
+    ["Linux", ".rpm", "x64", "otty-0.2.0-1.x86_64.rpm"],
+    ["macOS", ".dmg", "ARM64", "otty_0.2.0-aarch64-apple-darwin.dmg"],
+    ["macOS", ".dmg", "Intel", "otty_0.2.0-x86_64-apple-darwin.dmg"],
+  ];
+
+  for (const [platform, format, architecture, filename] of expectedDownloads) {
+    const section = platformSections.find((candidate) =>
+      candidate.querySelector("h2")?.textContent.trim() === platform,
+    );
+    assert.ok(section, `${platform} section is rendered`);
+    const formatRow = [...section.querySelectorAll(".format-row")].find(
+      (row) => row.querySelector("h4")?.textContent.trim() === format,
+    );
+    assert.ok(formatRow, `${platform} exposes ${format}`);
+    const action = [...formatRow.querySelectorAll("a[download]")].find(
+      (anchor) => anchor.textContent.trim() === architecture,
+    );
+    assert.ok(action, `${platform} ${format} exposes ${architecture}`);
+    assert.equal(
+      action.getAttribute("href"),
+      `https://github.com/otty-shell/otty/releases/download/v0.2.0/${filename}`,
+    );
+    assert.equal(action.getAttribute("download"), filename);
+  }
+  const linuxSection = platformSections.find(
+    (section) => section.querySelector("h2")?.textContent.trim() === "Linux",
+  );
+  const macosSection = platformSections.find(
+    (section) => section.querySelector("h2")?.textContent.trim() === "macOS",
+  );
+  assert.ok(linuxSection);
+  assert.ok(macosSection);
+  assert.ok(linuxSection.querySelector(".format-list + .platform-note"));
+  assert.ok(macosSection.querySelector(".format-list + .platform-note"));
+  assert.match(linuxSection.querySelector(".platform-note").textContent, /Intel or AMD 64-bit/i);
+  assert.match(linuxSection.querySelector(".platform-note").textContent, /Linux ARM64/i);
+  assert.match(macosSection.querySelector(".platform-note").textContent, /M1 or newer/i);
+  assert.match(macosSection.querySelector(".platform-note").textContent, /Intel-based Macs/i);
+  assert.match(macosSection.querySelector(".platform-note").textContent, /not notarized by Apple/i);
+  assert.match(macosSection.querySelector(".platform-note").textContent, /Open Anyway/i);
+  assert.doesNotMatch(
+    installationPage.querySelector(".platform-sections").textContent,
+    /\bMB\b|Debian|RPM-based|otty[_-]0\.2\.0/i,
+  );
 
   assert.match(installation, /Apple Silicon[^<]*M1 or newer/i);
   assert.match(installation, /Intel-based Macs/i);
-  assert.match(installation, /Linux x86-64[^<]*Intel or AMD 64-bit/i);
-  assert.match(installation, /Windows is currently unavailable/i);
-  assert.match(installation, /Linux ARM64[^<]*currently unavailable/i);
+  assert.match(installation, /Coming soon/i);
   assert.match(installation, /not notarized by Apple/i);
   assert.match(installation, /System Settings/i);
   assert.match(installation, /Privacy (?:&amp;|&#x26;|&)\s*Security/i);
   assert.match(installation, /Open Anyway/i);
-  assert.doesNotMatch(installation, /api\.github\.com|Coming soon|disable Gatekeeper|xattr/i);
+  assert.doesNotMatch(installation, /api\.github\.com|disable Gatekeeper|xattr/i);
 
   assert.match(nestedGuide, /<h1[^>]*>Nested Operations<\/h1>/);
   assert.match(nestedGuide, /<img[^>]*alt="Terminal map"/);
@@ -505,17 +630,38 @@ test("the production artifact contains the Product Landing and synchronized Docu
     /Approved Starlight MDX remains available/,
   );
 
-  for (const asset of ["logo-full.svg", "logo-small.svg", "otty.png"]) {
-    assert.equal(existsSync(join(artifactPath, "assets", asset)), true);
+  assert.equal(existsSync(join(artifactPath, "assets", "logo.svg")), true);
+  for (const asset of [
+    "hero.png",
+    "workspace-poster.png",
+    "workspace.webm",
+    "command-blocks-poster.png",
+    "command-blocks.webm",
+    "explorer-poster.png",
+    "explorer.webm",
+    "quick-launch-poster.png",
+    "quick-launch.webm",
+  ]) {
+    assert.equal(existsSync(join(artifactPath, "assets", "product-evidence", asset)), true);
   }
-  for (const font of ["hack-regular.woff2", "hack-bold.woff2"]) {
-    assert.equal(existsSync(join(artifactPath, "fonts", "hack", font)), true);
+  for (const font of [
+    "jetbrains-mono-regular.woff2",
+    "jetbrains-mono-bold.woff2",
+    "OFL.txt",
+  ]) {
+    assert.equal(existsSync(join(artifactPath, "fonts", "jetbrains-mono", font)), true);
   }
 
   const completeArtifact = listFiles(artifactPath)
     .filter((path) => path.endsWith(".html"))
     .map((path) => readFileSync(path, "utf8"))
     .join("\n");
+  const completeStyles = [
+    completeArtifact,
+    ...listFiles(artifactPath)
+      .filter((path) => path.endsWith(".css"))
+      .map((path) => readFileSync(path, "utf8")),
+  ].join("\n");
   const artifactFiles = listFiles(artifactPath).map((path) => relative(artifactPath, path));
   const repositoryOnlyPaths = [
     ".generated",
@@ -547,6 +693,13 @@ test("the production artifact contains the Product Landing and synchronized Docu
   }
   assert.equal(completeArtifact.match(/alt="Terminal map"/g)?.length, 1);
   assert.doesNotMatch(completeArtifact, /artifact-internal-marker/);
+  assert.match(completeStyles, /--otty-grid-background:linear-gradient\(/);
+  assert.match(completeStyles, /--otty-grid-size:4\.5rem 4\.5rem/);
+  assert.match(completeStyles, /body\.landing-page[^}]*background:var\(--otty-grid-background\)/);
+  assert.match(
+    completeStyles,
+    /body:not\(\.landing-page\),body:not\(\.landing-page\) header\.header,body:not\(\.landing-page\) \.sidebar-pane\{background:var\(--otty-grid-background\)/,
+  );
 
   assert.equal(readArtifact("CNAME"), "otty.run\n");
   assert.equal(existsSync(join(artifactPath, "server")), false);
@@ -570,19 +723,22 @@ test("the production artifact contains the Product Landing and synchronized Docu
   assert.equal(productLandingSearch.results.length, 0);
 });
 
-test("a live-input build prerenders validated release facts without a runtime API call", async () => {
+test("a live-input build prerenders release facts while stars refresh at runtime", async () => {
   rmSync(artifactPath, { recursive: true, force: true });
-  const ottySource = createPublicDocumentationSource();
+  const documentationSource = createPublicDocumentationSource();
   const stableRelease = readStableReleaseFixture(repositoryRoot);
 
   try {
     await withReleaseApi(
       { body: JSON.stringify(stableRelease) },
       async ({ apiUrl, requests }) => {
-        const buildEnvironment = createBuildEnvironment(ottySource, {
-          OTTY_RELEASE_SOURCE: "github",
-          OTTY_GITHUB_RELEASES_API_URL: apiUrl,
-        });
+        const buildEnvironment = createBuildEnvironment(
+          documentationSource.documentationIndex,
+          {
+            OTTY_RELEASE_SOURCE: "github",
+            OTTY_GITHUB_RELEASES_API_URL: apiUrl,
+          },
+        );
         const build = await runNpmScriptAsync(repositoryRoot, "build", buildEnvironment);
 
         assert.equal(
@@ -592,7 +748,9 @@ test("a live-input build prerenders validated release facts without a runtime AP
         );
         assert.equal(requests.length, 1);
 
-        const installation = htmlBeforeClientJavaScript("docs/install/index.html");
+        const installation = htmlBeforeClientJavaScript(
+          "docs/getting-started/installation/binary/index.html",
+        );
         assert.match(installation, /Latest stable/);
         assert.match(installation, /v0\.2\.0/);
         assert.match(installation, /August 29, 2026/);
@@ -606,22 +764,21 @@ test("a live-input build prerenders validated release facts without a runtime AP
           )?.length,
           4,
         );
-        assert.doesNotMatch(
-          listFiles(artifactPath)
-            .filter((path) => path.endsWith(".html") || path.endsWith(".js"))
-            .map((path) => readFileSync(path, "utf8"))
-            .join("\n"),
-          /api\.github\.com|127\.0\.0\.1/,
-        );
+        const browserArtifact = listFiles(artifactPath)
+          .filter((path) => path.endsWith(".html") || path.endsWith(".js"))
+          .map((path) => readFileSync(path, "utf8"))
+          .join("\n");
+        assert.match(browserArtifact, /https:\/\/api\.github\.com\/repos\/otty-shell\/otty/);
+        assert.doesNotMatch(browserArtifact, /api\.github\.com\/repos\/otty-shell\/otty\/releases|127\.0\.0\.1/);
       },
     );
   } finally {
-    rmSync(ottySource, { recursive: true, force: true });
+    rmSync(documentationSource.sourceRoot, { recursive: true, force: true });
   }
 });
 
 test("live-input failures stop the production build before an artifact exists", async () => {
-  const ottySource = createPublicDocumentationSource();
+  const documentationSource = createPublicDocumentationSource();
   const invalidMatrix = structuredClone(readStableReleaseFixture(repositoryRoot));
   invalidMatrix.assets[1].name = "otty-0.2.0.x86_64.rpm";
   const failures = [
@@ -642,10 +799,13 @@ test("live-input failures stop the production build before an artifact exists", 
       rmSync(artifactPath, { recursive: true, force: true });
 
       await withReleaseApi(failure.response, async ({ apiUrl }) => {
-        const buildEnvironment = createBuildEnvironment(ottySource, {
-          OTTY_RELEASE_SOURCE: "github",
-          OTTY_GITHUB_RELEASES_API_URL: apiUrl,
-        });
+        const buildEnvironment = createBuildEnvironment(
+          documentationSource.documentationIndex,
+          {
+            OTTY_RELEASE_SOURCE: "github",
+            OTTY_GITHUB_RELEASES_API_URL: apiUrl,
+          },
+        );
         const build = await runNpmScriptAsync(repositoryRoot, "build", buildEnvironment);
 
         assert.notEqual(build.status, 0, failure.name);
@@ -657,9 +817,10 @@ test("live-input failures stop the production build before an artifact exists", 
     rmSync(artifactPath, { recursive: true, force: true });
     rmSync(generatedReleaseDataPath, { recursive: true, force: true });
     mkdirSync(generatedReleaseDataPath, { recursive: true });
-    const generatedDataFailureEnvironment = createBuildEnvironment(ottySource, {
-      OTTY_RELEASE_SOURCE: "github",
-    });
+    const generatedDataFailureEnvironment = createBuildEnvironment(
+      documentationSource.documentationIndex,
+      { OTTY_RELEASE_SOURCE: "github" },
+    );
     const generatedDataFailure = await runNpmScriptAsync(
       repositoryRoot,
       "build",
@@ -675,6 +836,23 @@ test("live-input failures stop the production build before an artifact exists", 
   } finally {
     rmSync(generatedReleaseDataPath, { recursive: true, force: true });
     rmSync(releaseDataStageManifestPath, { force: true });
-    rmSync(ottySource, { recursive: true, force: true });
+    const restoration = await runNpmScriptAsync(
+      repositoryRoot,
+      "prepare:release",
+      createBuildEnvironment(documentationSource.documentationIndex, {
+        OTTY_RELEASE_SOURCE: "fixture",
+      }),
+    );
+    rmSync(documentationSource.sourceRoot, { recursive: true, force: true });
+    assert.equal(
+      restoration.status,
+      0,
+      `release stage restoration failed\n\nstdout:\n${restoration.stdout}\n\nstderr:\n${restoration.stderr}`,
+    );
   }
+});
+
+test("production artifact verification leaves a valid release stage for local development", () => {
+  assert.equal(existsSync(generatedReleaseDataPath), true);
+  assert.equal(existsSync(releaseDataStageManifestPath), true);
 });

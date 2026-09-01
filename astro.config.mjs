@@ -14,7 +14,14 @@ export default defineConfig({
     starlight({
       title: "OTTY Documentation",
       customCss: ["./src/styles/site.css"],
+      components: {
+        SiteTitle: "./src/components/starlight/SiteTitle.astro",
+        ThemeProvider: "./src/components/starlight/DarkTheme.astro",
+        ThemeSelect: "./src/components/starlight/ThemeSelect.astro",
+        PageSidebar: "./src/components/starlight/PageSidebar.astro",
+      },
       pagefind: true,
+      sidebar: [{ autogenerate: { directory: "docs" } }],
       social: [
         {
           icon: "github",

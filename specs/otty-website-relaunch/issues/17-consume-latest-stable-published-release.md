@@ -10,7 +10,7 @@
 - [x] Missing stable releases, prerelease-only input, malformed metadata, an invalid package matrix, API failures, and generated-data failures produce a non-zero build before deployment.
 - [x] The deleted prerelease and bare tags without a GitHub Release can never become the selected Published Release, and no transitional exception is added for a non-compliant RPM filename.
 - [x] Release facts are written only as ephemeral typed build data and include version, publication date, release-notes destination, all-releases destination, and complete Installation Method records.
-- [x] Browsers receive release facts and direct links in prerendered HTML and never call the GitHub API at runtime.
+- [x] Browsers receive release facts and direct links in prerendered HTML and never obtain Published Release facts from the GitHub API at runtime; the Product Landing's independent public star-count enhancement is outside this release-data boundary.
 - [x] Production input selection cannot use the local fixture, while controlled contract checks can exercise successful and failing API responses without depending on mutable live state.
 
 ## Comments

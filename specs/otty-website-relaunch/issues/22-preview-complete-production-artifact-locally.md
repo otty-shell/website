@@ -6,7 +6,7 @@
 
 **Status:** resolved
 
-- [x] A package script named `preview:production` requires `OTTY_SOURCE_DIR`, rejects its absence, and never assumes a sibling checkout location.
+- [x] A package script named `preview:production` requires an absolute `OTTY_DOCUMENTATION_INDEX` path, rejects its absence, and never assumes a repository or Documentation location.
 - [x] The command clears and stages the Public Documentation Source, obtains explicitly selected local-fixture or live release input, runs the shared release validator, builds Astro and Pagefind output, serves the completed `dist`, and prints the local URL.
 - [x] Fixture selection is explicit and local-only; a final live-input preview cannot silently fall back to it.
 - [x] One controlled valid input produces the canonical Product Landing, Documentation index, representative article, Installation and Downloads, navigation, release facts and links, responsive Product Evidence, canonicals, sitemap, and Pagefind assets.

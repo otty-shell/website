@@ -48,7 +48,8 @@ test("the read-only build job synchronizes live inputs through the shared produc
 
   const productionBuild = build.steps.find((step) => step.run === "npm run build");
   assert.deepEqual(productionBuild.env, {
-    OTTY_SOURCE_DIR: "${{ github.workspace }}/.otty-source",
+    OTTY_DOCUMENTATION_INDEX:
+      "${{ github.workspace }}/.otty-source/docs/public/index.md",
     OTTY_RELEASE_SOURCE: "github",
     GITHUB_TOKEN: "${{ github.token }}",
   });

@@ -13,23 +13,28 @@ const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const temporaryRoots = [];
 
 function createPublicDocumentationSource() {
-  const ottySource = mkdtempSync(join(tmpdir(), "otty-production-preview-"));
-  temporaryRoots.push(ottySource);
+  const sourceRoot = mkdtempSync(join(tmpdir(), "otty-production-preview-"));
+  const documentationRoot = join(sourceRoot, "relocated", "public-manual");
+  const documentationIndex = join(documentationRoot, "index.md");
+  temporaryRoots.push(sourceRoot);
 
   writeTestFile(
-    join(ottySource, "docs", "public", "index.md"),
+    documentationIndex,
     "---\ntitle: Documentation\n---\n\nProduction preview guidance.\n",
   );
   writeTestFile(
-    join(ottySource, "docs", "public", "install.mdx"),
-    "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n",
+    join(documentationRoot, "Getting Started", "Installation", "Binary.mdx"),
+    "---\ntitle: Binary\n---\n\n<LatestDownloads />\n",
   );
 
-  return ottySource;
+  return documentationIndex;
 }
 
-function createEnvironment(ottySource, releaseSource) {
-  const environment = { ...process.env, OTTY_SOURCE_DIR: ottySource };
+function createEnvironment(documentationIndex, releaseSource) {
+  const environment = {
+    ...process.env,
+    OTTY_DOCUMENTATION_INDEX: documentationIndex,
+  };
   delete environment.CI;
   delete environment.GITHUB_ACTIONS;
   delete environment.PAGEFIND_BINARY_PATH;
@@ -75,16 +80,16 @@ test.after(() => {
   }
 });
 
-test("production preview requires an explicit Public Documentation Source", () => {
+test("production preview requires an explicit Documentation index", () => {
   const environment = { ...process.env, OTTY_RELEASE_SOURCE: "fixture" };
-  delete environment.OTTY_SOURCE_DIR;
+  delete environment.OTTY_DOCUMENTATION_INDEX;
   delete environment.CI;
   delete environment.GITHUB_ACTIONS;
 
   const preview = runProductionPreview(environment);
 
   assert.notEqual(preview.status, 0);
-  assert.match(`${preview.stdout}\n${preview.stderr}`, /OTTY_SOURCE_DIR.*required/is);
+  assert.match(`${preview.stdout}\n${preview.stderr}`, /OTTY_DOCUMENTATION_INDEX.*required/is);
 });
 
 test("production preview requires explicit release input selection", () => {
@@ -95,13 +100,15 @@ test("production preview requires explicit release input selection", () => {
 });
 
 test("production preview stops when Astro cannot render the staged Documentation", () => {
-  const ottySource = createPublicDocumentationSource();
+  const documentationIndex = createPublicDocumentationSource();
   writeTestFile(
-    join(ottySource, "docs", "public", "broken.mdx"),
+    join(dirname(documentationIndex), "broken.mdx"),
     "---\ntitle: Broken article\n---\n\n{missingProductionPreviewValue}\n",
   );
 
-  const preview = runProductionPreview(createEnvironment(ottySource, "fixture"));
+  const preview = runProductionPreview(
+    createEnvironment(documentationIndex, "fixture"),
+  );
 
   assert.notEqual(preview.status, 0);
   assert.match(

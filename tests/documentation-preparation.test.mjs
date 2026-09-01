@@ -1,11 +1,5 @@
 import assert from "node:assert/strict";
-import {
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-} from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,17 +17,17 @@ function makeTemporaryDirectory() {
   return directory;
 }
 
-function runPreparation(sourceDirectory) {
-  return runNpmScript("prepare:docs", sourceDirectory);
+function runPreparation(documentationIndex) {
+  return runNpmScript("prepare:docs", documentationIndex);
 }
 
-function runNpmScript(script, sourceDirectory) {
+function runNpmScript(script, documentationIndex) {
   const environment = { ...process.env };
 
-  if (sourceDirectory === undefined) {
-    delete environment.OTTY_SOURCE_DIR;
+  if (documentationIndex === undefined) {
+    delete environment.OTTY_DOCUMENTATION_INDEX;
   } else {
-    environment.OTTY_SOURCE_DIR = sourceDirectory;
+    environment.OTTY_DOCUMENTATION_INDEX = documentationIndex;
   }
 
   return spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", ["run", script], {
@@ -56,33 +50,44 @@ test.after(() => {
   }
 });
 
-test("documentation preparation requires an explicit Public Documentation Source", () => {
+test("documentation preparation requires an explicit absolute Documentation index", () => {
   const missingInput = runPreparation();
   assert.notEqual(missingInput.status, 0);
-  assert.match(`${missingInput.stdout}\n${missingInput.stderr}`, /OTTY_SOURCE_DIR/);
+  assert.match(`${missingInput.stdout}\n${missingInput.stderr}`, /OTTY_DOCUMENTATION_INDEX/);
 
-  const ottySource = makeTemporaryDirectory();
-  mkdirSync(resolve(ottySource, "docs"), { recursive: true });
+  const relativeInput = runPreparation("documentation/index.md");
+  assert.notEqual(relativeInput.status, 0);
+  assert.match(`${relativeInput.stdout}\n${relativeInput.stderr}`, /absolute path.*index\.md/i);
 
-  const missingPublicTree = runPreparation(ottySource);
-  assert.notEqual(missingPublicTree.status, 0);
-  assert.match(`${missingPublicTree.stdout}\n${missingPublicTree.stderr}`, /docs[/\\]public/);
+  const sourceRoot = makeTemporaryDirectory();
+  const nonIndexInput = runPreparation(resolve(sourceRoot, "relocated", "home.md"));
+  assert.notEqual(nonIndexInput.status, 0);
+  assert.match(`${nonIndexInput.stdout}\n${nonIndexInput.stderr}`, /file named index\.md/i);
+
+  const missingIndex = resolve(sourceRoot, "relocated", "index.md");
+  const missingSource = runPreparation(missingIndex);
+  assert.notEqual(missingSource.status, 0);
+  assert.match(
+    `${missingSource.stdout}\n${missingSource.stderr}`,
+    /Documentation index not found.*index\.md/i,
+  );
 });
 
-test("documentation preparation requires exactly one unconfigured LatestDownloads component", () => {
+test("documentation preparation requires exactly one unconfigured LatestDownloads component on Binary", () => {
   const invalidInstallationPages = [
     {
-      name: "missing Installation and Downloads page",
+      name: "missing Binary installation page",
       files: {
         "index.md": "---\ntitle: Documentation\n---\n",
       },
-      message: /install\.mdx.*required/i,
+      message: /Getting Started\/Installation\/Binary\.mdx.*required/i,
     },
     {
       name: "missing LatestDownloads component",
       files: {
         "index.md": "---\ntitle: Documentation\n---\n",
-        "install.mdx": "---\ntitle: Installation and Downloads\n---\n\nChoose a package.\n",
+        "Getting Started/Installation/Binary.mdx":
+          "---\ntitle: Binary\n---\n\nChoose a package.\n",
       },
       message: /exactly one.*LatestDownloads.*found 0/i,
     },
@@ -90,8 +95,8 @@ test("documentation preparation requires exactly one unconfigured LatestDownload
       name: "duplicate LatestDownloads components",
       files: {
         "index.md": "---\ntitle: Documentation\n---\n",
-        "install.mdx":
-          "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n\n<LatestDownloads />\n",
+        "Getting Started/Installation/Binary.mdx":
+          "---\ntitle: Binary\n---\n\n<LatestDownloads />\n\n<LatestDownloads />\n",
       },
       message: /exactly one.*LatestDownloads.*found 2/i,
     },
@@ -99,21 +104,25 @@ test("documentation preparation requires exactly one unconfigured LatestDownload
       name: "authored release-specific component values",
       files: {
         "index.md": "---\ntitle: Documentation\n---\n",
-        "install.mdx":
-          '---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads version="1.2.3" />\n',
+        "Getting Started/Installation/Binary.mdx":
+          '---\ntitle: Binary\n---\n\n<LatestDownloads version="1.2.3" />\n',
       },
       message: /LatestDownloads.*does not accept authored attributes/i,
     },
   ];
 
   for (const invalidPage of invalidInstallationPages) {
-    const ottySource = makeTemporaryDirectory();
+    const documentationRoot = join(
+      makeTemporaryDirectory(),
+      "relocated",
+      "public-manual",
+    );
 
     for (const [relativePath, contents] of Object.entries(invalidPage.files)) {
-      writeTestFile(join(ottySource, "docs", "public", relativePath), contents);
+      writeTestFile(join(documentationRoot, relativePath), contents);
     }
 
-    const preparation = runPreparation(ottySource);
+    const preparation = runPreparation(join(documentationRoot, "index.md"));
     assert.notEqual(preparation.status, 0, invalidPage.name);
     assert.match(
       `${preparation.stdout}\n${preparation.stderr}`,
@@ -124,8 +133,8 @@ test("documentation preparation requires exactly one unconfigured LatestDownload
 });
 
 test("documentation preparation replaces staging with only the public authoring tree", () => {
-  const ottySource = makeTemporaryDirectory();
-  const publicSource = join(ottySource, "docs", "public");
+  const sourceRoot = makeTemporaryDirectory();
+  const publicSource = join(sourceRoot, "relocated", "public-manual");
 
   writeTestFile(
     join(publicSource, "index.md"),
@@ -157,17 +166,17 @@ import { Aside } from '@astrojs/starlight/components';
 `,
   );
   writeTestFile(
-    join(publicSource, "install.mdx"),
-    "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n",
+    join(publicSource, "Getting Started", "Installation", "Binary.mdx"),
+    "---\ntitle: Binary\n---\n\n<LatestDownloads />\n",
   );
   writeTestFile(
-    join(ottySource, "docs", "internal", "maintainers.md"),
+    join(sourceRoot, "unrelated", "internal", "maintainers.md"),
     "internal-only-marker\n",
   );
-  writeTestFile(join(ottySource, "AGENTS.md"), "agent-only-marker\n");
+  writeTestFile(join(sourceRoot, "AGENTS.md"), "agent-only-marker\n");
   writeTestFile(join(stagedDocumentation, "stale.md"), "stale-staging-marker\n");
 
-  const preparation = runPreparation(ottySource);
+  const preparation = runPreparation(join(publicSource, "index.md"));
 
   assert.equal(
     preparation.status,
@@ -178,8 +187,8 @@ import { Aside } from '@astrojs/starlight/components';
     "01-guides/diagram.svg",
     "01-guides/index.md",
     "02-details.mdx",
+    "Getting Started/Installation/Binary.mdx",
     "index.md",
-    "install.mdx",
   ]);
   assert.equal(
     readFileSync(join(stagedDocumentation, "01-guides", "diagram.svg"), "utf8"),
@@ -229,17 +238,21 @@ test("documentation preparation rejects pages outside the public authoring contr
   ];
 
   for (const invalidSource of invalidSources) {
-    const ottySource = makeTemporaryDirectory();
-
-    for (const [relativePath, contents] of Object.entries(invalidSource.files)) {
-      writeTestFile(join(ottySource, "docs", "public", relativePath), contents);
-    }
-    writeTestFile(
-      join(ottySource, "docs", "public", "install.mdx"),
-      "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n",
+    const documentationRoot = join(
+      makeTemporaryDirectory(),
+      "relocated",
+      "public-manual",
     );
 
-    const preparation = runPreparation(ottySource);
+    for (const [relativePath, contents] of Object.entries(invalidSource.files)) {
+      writeTestFile(join(documentationRoot, relativePath), contents);
+    }
+    writeTestFile(
+      join(documentationRoot, "Getting Started", "Installation", "Binary.mdx"),
+      "---\ntitle: Binary\n---\n\n<LatestDownloads />\n",
+    );
+
+    const preparation = runPreparation(join(documentationRoot, "index.md"));
     assert.notEqual(preparation.status, 0, invalidSource.name);
     assert.match(
       `${preparation.stdout}\n${preparation.stderr}`,
@@ -250,17 +263,22 @@ test("documentation preparation rejects pages outside the public authoring contr
 });
 
 test("the site build rejects staging changed after documentation preparation", () => {
-  const ottySource = makeTemporaryDirectory();
+  const documentationRoot = join(
+    makeTemporaryDirectory(),
+    "relocated",
+    "public-manual",
+  );
   writeTestFile(
-    join(ottySource, "docs", "public", "index.md"),
+    join(documentationRoot, "index.md"),
     "---\ntitle: Documentation\n---\n\nControlled content.\n",
   );
   writeTestFile(
-    join(ottySource, "docs", "public", "install.mdx"),
-    "---\ntitle: Installation and Downloads\n---\n\n<LatestDownloads />\n",
+    join(documentationRoot, "Getting Started", "Installation", "Binary.mdx"),
+    "---\ntitle: Binary\n---\n\n<LatestDownloads />\n",
   );
 
-  const preparation = runPreparation(ottySource);
+  const documentationIndex = join(documentationRoot, "index.md");
+  const preparation = runPreparation(documentationIndex);
   assert.equal(preparation.status, 0);
 
   writeTestFile(
@@ -268,7 +286,7 @@ test("the site build rejects staging changed after documentation preparation", (
     "---\ntitle: Stale injection\n---\n\nThis must never ship.\n",
   );
 
-  const build = runNpmScript("build:site", ottySource);
+  const build = runNpmScript("build:site", documentationIndex);
   assert.notEqual(build.status, 0);
   assert.match(`${build.stdout}\n${build.stderr}`, /staging.*(changed|contaminated)/i);
 });

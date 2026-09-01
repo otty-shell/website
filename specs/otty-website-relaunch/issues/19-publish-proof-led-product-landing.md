@@ -12,7 +12,7 @@
 - [ ] All four resolved Current Capability titles, benefit-oriented sentences, and Product Evidence items appear in document order in generated HTML, with Quick Launch copy presenting SSH only as an SSH Client capability.
 - [ ] The compact Footer contains OTTY identity, Documentation, GitHub, license, and applicable contributor or copyright attribution without repeating the Download action or becoming a large sitemap.
 - [ ] The selected Signal Sequence language uses a near-black terminal-led canvas, restrained coordinate grid, structural rules, cyan and magenta signals, dense bordered surfaces, and command-like details without turning body copy into simulated terminal output.
-- [ ] Hack WOFF2 files are self-hosted with Adwaita Mono, Liberation Mono, and generic monospace fallbacks; font failure remains legible and causes no clipping.
+- [ ] JetBrains Mono WOFF2 files are self-hosted with Adwaita Mono, Liberation Mono, and generic monospace fallbacks; font failure remains legible and causes no clipping.
 - [ ] Screenshot output includes responsive AVIF and WebP variants plus PNG fallback, intrinsic dimensions, authored alternatives, and full-frame rendering without automatic cover cropping.
-- [ ] At 320 CSS pixels the Hero becomes one column, evidence keeps its complete 16:10 frame, labels remain readable, and the page has no horizontal scrolling.
+- [ ] At 320 CSS pixels the Hero becomes one column, every authored evidence frame remains complete, labels remain readable, and the page has no horizontal scrolling.
 - [ ] Starlight customization uses public configuration, CSS, and only the smallest necessary component overrides while preserving conventional Documentation behavior.

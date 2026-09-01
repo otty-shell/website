@@ -107,10 +107,17 @@ function prepareReleaseAsync(source, environmentOverrides = {}) {
   return runNpmScriptAsync(repositoryRoot, "prepare:release", environment);
 }
 
-test.after(() => {
+test.after(async () => {
   for (const directory of temporaryRoots) {
     rmSync(directory, { recursive: true, force: true });
   }
+
+  const restoration = await prepareReleaseAsync("fixture");
+  assert.equal(
+    restoration.status,
+    0,
+    `release stage restoration failed\n\nstdout:\n${restoration.stdout}\n\nstderr:\n${restoration.stderr}`,
+  );
 });
 
 test("release generation selects the latest published stable release and emits current methods", () => {

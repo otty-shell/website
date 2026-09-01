@@ -9,8 +9,8 @@ const variants = [
 ];
 
 const views = ["landing", "docs", "install"];
-const screenshotPath = "../../assets/otty.png";
-const logoPath = "../../assets/logo-small.svg";
+const screenshotPath = "../../public/assets/product-evidence/hero.png";
+const logoPath = "../../public/assets/logo.svg";
 
 function brand(extraClass = "") {
   return `

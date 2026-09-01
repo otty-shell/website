@@ -6,24 +6,24 @@ const publicationDate = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 }).format(new Date(releaseData.publishedAt));
 const methodGroups = Array.from(new Set(releaseData.methods.map((method) => method.group))).map(
-  (group) => ({
-    group,
-    methods: releaseData.methods
-      .filter((method) => method.group === group)
-      .map((method) => ({ method, presentation: presentInstallationMethod(method) })),
-  }),
+  (group) => {
+    const groupMethods = releaseData.methods.filter((method) => method.group === group);
+
+    return {
+      group,
+      formats: Array.from(new Set(groupMethods.map((method) => method.format))).map((format) => ({
+        format,
+        actions: groupMethods
+          .filter((method) => method.format === format)
+          .map((method) => presentInstallationMethod(method)),
+      })),
+    };
+  },
 );
 
-function formatByteSize(bytes: number) {
-  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
-  if (bytes >= 1_000) return `${(bytes / 1_000).toFixed(1)} KB`;
-  return `${bytes} B`;
-}
-
 interface InstallationMethodPresentation {
-  detail: string;
-  size: string;
   actionLabel: string;
+  actionIndicator?: string;
   href?: string;
   download?: string;
 }
@@ -32,34 +32,35 @@ function presentInstallationMethod(method: InstallationMethod): InstallationMeth
   switch (method.kind) {
     case "release-asset":
       return {
-        detail: method.filename,
-        size: formatByteSize(method.sizeBytes),
-        actionLabel: "Download",
+        actionLabel: compactArchitecture(method.architecture),
         href: method.browser_download_url,
         download: method.filename,
       };
     case "command":
       return {
-        detail: "Terminal command",
-        size: "",
         actionLabel: method.command,
       };
     case "external":
       return {
-        detail: "Official destination",
-        size: "",
         actionLabel: method.destination,
+        actionIndicator: "→",
         href: method.url,
       };
   }
 }
+
+function compactArchitecture(architecture: string) {
+  if (architecture === "x86-64") return "x64";
+  if (architecture === "Apple Silicon") return "ARM64";
+  return architecture;
+}
 ---
 
-<section class="latest-downloads" aria-labelledby="latest-stable-release">
+<section class="latest-downloads" aria-label="Latest stable downloads">
   <div class="release-summary">
     <div>
       <p class="release-label">Latest stable</p>
-      <h2 id="latest-stable-release">v{releaseData.version}</h2>
+      <p class="release-version">v{releaseData.version}</p>
       <p>Published <time datetime={releaseData.publishedAt}>{publicationDate}</time></p>
     </div>
     <nav aria-label="Release destinations">
@@ -68,49 +69,87 @@ function presentInstallationMethod(method: InstallationMethod): InstallationMeth
     </nav>
   </div>
 
-  {
-    methodGroups.map(({ group, methods }) => (
-      <section class="method-group" aria-labelledby={`installation-methods-${group.toLowerCase()}`}>
-        <h3 id={`installation-methods-${group.toLowerCase()}`}>{group}</h3>
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Platform</th>
-              <th scope="col">Architecture</th>
-              <th scope="col">Format</th>
-              <th scope="col">Package or method</th>
-              <th scope="col">Size</th>
-              <th scope="col">Get OTTY</th>
-            </tr>
-          </thead>
-          <tbody>
-            {methods.map(({ method, presentation }) => (
-              <tr>
-                <td data-label="Platform">{method.platform}</td>
-                <td data-label="Architecture">{method.architecture}</td>
-                <td data-label="Format">
-                  <code>{method.format}</code>
-                </td>
-                <td data-label="Package or method">
-                  <code>{presentation.detail}</code>
-                </td>
-                <td data-label="Size">{presentation.size}</td>
-                <td data-label="Get OTTY">
-                  {presentation.href ? (
-                    <a href={presentation.href} download={presentation.download}>
-                      {presentation.actionLabel}
-                    </a>
-                  ) : (
-                    <code>{presentation.actionLabel}</code>
+  <div class="platform-sections">
+    {
+      methodGroups.map(({ group, formats }) => (
+        <section class="platform-section" aria-labelledby={group === "macOS" ? "macos" : group.toLowerCase()}>
+          <header class="platform-section-header">
+            <h2 id={group === "macOS" ? "macos" : group.toLowerCase()}>{group}</h2>
+            <a
+              class="section-anchor"
+              href={`#${group === "macOS" ? "macos" : group.toLowerCase()}`}
+              aria-label={`Link to ${group} section`}
+            >
+              <span aria-hidden="true">#</span>
+            </a>
+          </header>
+
+          <div class="format-list">
+            {formats.map(({ format, actions }) => (
+              <div class="format-row">
+                <h4>.{format}</h4>
+                <div class="method-actions" aria-label={`.${format} architectures`}>
+                  {actions.map((presentation) =>
+                    presentation.href ? (
+                      <a
+                        class="method-action"
+                        href={presentation.href}
+                        download={presentation.download}
+                        aria-label={`Download ${group} .${format} for ${presentation.actionLabel}`}
+                      >
+                        <span>{presentation.actionLabel}</span>
+                        {presentation.actionIndicator && (
+                          <span aria-hidden="true">{presentation.actionIndicator}</span>
+                        )}
+                      </a>
+                    ) : (
+                      <code class="method-command">{presentation.actionLabel}</code>
+                    ),
                   )}
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </section>
-    ))
-  }
+          </div>
+
+          {group === "Linux" && (
+            <aside class="platform-note" aria-label="Linux installation information">
+              <p>
+                <strong>x64</strong> packages support Intel or AMD 64-bit computers. Linux ARM64
+                (<code>arm64</code> or <code>aarch64</code>) is currently unavailable.
+              </p>
+            </aside>
+          )}
+
+          {group === "macOS" && (
+            <aside class="platform-note" aria-label="macOS installation information">
+              <p>
+                <strong>ARM64</strong> is for Apple Silicon Macs (M1 or newer). Choose <strong>
+                  Intel
+                </strong> for Intel-based Macs.
+              </p>
+              <p>
+                <strong>First launch:</strong> OTTY is not notarized by Apple. After trying to open
+                OTTY once, open <strong>System Settings → Privacy &amp; Security</strong>, find the
+                notice that OTTY was blocked, select <strong>Open Anyway</strong>, then confirm <strong>
+                  Open
+                </strong>.
+              </p>
+            </aside>
+          )}
+        </section>
+      ))
+    }
+
+    <section class="platform-section platform-section-unavailable" aria-labelledby="windows">
+      <header class="platform-section-header">
+        <h2 id="windows">Windows</h2>
+        <a class="section-anchor" href="#windows" aria-label="Link to Windows section">
+          <span aria-hidden="true">#</span>
+        </a>
+      </header>
+      <p class="platform-placeholder">Coming soon</p>
+    </section>
+  </div>
 </section>
 
 <style>
@@ -127,7 +166,7 @@ function presentInstallationMethod(method: InstallationMethod): InstallationMeth
     padding-block: 1.25rem;
   }
 
-  .release-summary :is(p, h2) {
+  .release-summary p {
     margin: 0;
   }
 
@@ -139,9 +178,11 @@ function presentInstallationMethod(method: InstallationMethod): InstallationMeth
     text-transform: uppercase;
   }
 
-  .release-summary h2 {
+  .release-version {
     margin-block: 0.2rem;
+    color: var(--sl-color-white);
     font-size: var(--sl-text-3xl);
+    font-weight: 700;
   }
 
   .release-summary nav {
@@ -151,43 +192,134 @@ function presentInstallationMethod(method: InstallationMethod): InstallationMeth
     gap: 0.65rem 1rem;
   }
 
-  .method-group {
-    margin-block: 1.5rem;
+  .platform-sections {
+    border-block-start: 1px solid var(--sl-color-gray-5);
   }
 
-  .method-group h3 {
-    margin-block: 0 0.5rem;
-  }
-
-  table {
-    display: table;
-    width: 100%;
+  .platform-section {
     margin: 0;
-    table-layout: fixed;
+    padding-block: 1.5rem;
+    border-block-end: 1px solid var(--sl-color-gray-5);
+  }
+
+  .platform-sections > .platform-section {
+    margin: 0;
+  }
+
+  .platform-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .platform-section-header h2 {
+    margin: 0;
+    font-size: var(--sl-text-2xl);
+  }
+
+  .section-anchor {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-lg);
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+  }
+
+  .section-anchor:hover,
+  .section-anchor:focus-visible {
+    color: var(--sl-color-accent-high);
+  }
+
+  .format-list {
+    margin-block-start: 1rem;
+    border-block-end: 1px solid var(--sl-color-gray-5);
+  }
+
+  .format-row {
+    display: grid;
+    grid-template-columns: minmax(7rem, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    min-height: 4.5rem;
+    padding-block: 0.75rem;
+    border-block-start: 1px solid var(--sl-color-gray-5);
+  }
+
+  .format-row h4 {
+    margin: 0;
+    font-size: var(--sl-text-lg);
+  }
+
+  .method-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.65rem;
+  }
+
+  .method-action {
+    display: inline-flex;
+    min-width: 5.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--sl-color-accent-high);
+    color: var(--sl-color-accent-high);
     font-size: var(--sl-text-sm);
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
   }
 
-  th,
-  td {
-    padding: 0.65rem;
-    border: 1px solid var(--sl-color-gray-5);
+  .method-action:hover {
+    background: var(--sl-color-accent-high);
+    color: var(--sl-color-bg);
+  }
+
+  .method-action:focus-visible {
+    outline: 2px solid var(--otty-magenta, var(--sl-color-accent));
+    outline-offset: 3px;
+  }
+
+  .method-command {
+    display: block;
+    max-width: 100%;
+    padding: 0;
     overflow-wrap: anywhere;
-    text-align: left;
-    vertical-align: top;
+    background: transparent;
+    font-size: var(--sl-text-xs);
   }
 
-  th {
-    background: var(--sl-color-gray-6);
+  .platform-note {
+    margin-block-start: 1rem;
+    padding: 0.85rem 1rem;
+    border-inline-start: 2px solid var(--sl-color-accent-high);
+    background: color-mix(in srgb, var(--sl-color-accent-low) 45%, transparent);
+  }
+
+  .platform-note p {
+    margin: 0;
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-sm);
+    line-height: 1.65;
+  }
+
+  .platform-note p + p {
+    margin-block-start: 0.75rem;
+  }
+
+  .platform-note strong {
     color: var(--sl-color-white);
   }
 
-  th:nth-child(4),
-  td:nth-child(4) {
-    width: 25%;
-  }
-
-  td code {
-    font-size: 0.82em;
+  .platform-placeholder {
+    margin: 1rem 0 0;
+    color: var(--otty-magenta, var(--sl-color-accent));
+    font-size: var(--sl-text-sm);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   @media (max-width: 50rem) {
@@ -199,57 +331,15 @@ function presentInstallationMethod(method: InstallationMethod): InstallationMeth
     .release-summary nav {
       justify-content: flex-start;
     }
-
-    table,
-    tbody,
-    tr,
-    td {
-      display: block;
-      width: 100%;
-    }
-
-    table {
-      table-layout: auto;
-    }
-
-    thead {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
-
-    tr {
-      margin-block: 0.75rem;
-      border: 1px solid var(--sl-color-gray-5);
-    }
-
-    td {
-      display: grid;
-      grid-template-columns: minmax(7.5rem, 35%) minmax(0, 1fr);
-      gap: 0.75rem;
-      border: 0;
-      border-bottom: 1px solid var(--sl-color-gray-6);
-    }
-
-    td:last-child {
-      border-bottom: 0;
-    }
-
-    td::before {
-      color: var(--sl-color-gray-2);
-      content: attr(data-label);
-      font-weight: 700;
-    }
   }
 
   @media (max-width: 25rem) {
-    td {
+    .format-row {
       grid-template-columns: minmax(0, 1fr);
-      gap: 0.2rem;
+    }
+
+    .method-actions {
+      justify-content: flex-start;
     }
   }
 </style>

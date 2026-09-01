@@ -13,5 +13,5 @@
 - [ ] Verify three distinctive Pagefind queries reach their intended page and anchor and one absent query produces a clear no-results state.
 - [ ] Compare every rendered release fact with the live Published Release and successfully open all four direct package URLs, release notes, and All releases.
 - [ ] Check canonical metadata, robots rules, sitemap inventory, primary navigation, complete uncropped evidence, media controls, and the absence of unsupported compatibility, trust, roadmap, or Current Capability claims.
-- [ ] After cutover, smoke-test `https://otty.run/`, `/docs/`, and `/docs/install/`, including primary navigation and direct package links.
+- [ ] After cutover, smoke-test `https://otty.run/`, `/docs/`, and `/docs/getting-started/installation/binary/`, including primary navigation and direct package links.
 - [ ] If the deployment is flawed, recover through a normal source fix or revert and workflow rerun rather than a separate rollback platform, and repeat the affected smoke checks.

@@ -191,6 +191,9 @@ export function assertCapabilitySequenceBehavior(landingHtml) {
   const motionLanding = loadProductLanding(landingHtml);
   const motionDocument = motionLanding.dom.window.document;
   const videos = [...motionDocument.querySelectorAll("video")];
+  const mediaProgress = motionDocument.querySelector("[data-sequence-progress]");
+  assert.ok(mediaProgress);
+  assert.equal(mediaProgress.style.width, "0%");
   assert.equal(videos[0].hidden, false);
   assert.equal(videos[0].muted, true);
   assert.equal(videos[0].loop, true);
@@ -201,6 +204,33 @@ export function assertCapabilitySequenceBehavior(landingHtml) {
     assert.equal(video.hidden, true);
     assert.equal(video.paused, true);
   }
+
+  Object.defineProperty(videos[0], "duration", { configurable: true, value: 40 });
+  videos[0].currentTime = 10;
+  videos[0].dispatchEvent(new motionLanding.dom.window.Event("timeupdate"));
+  assert.equal(mediaProgress.style.width, "25%");
+
+  const motionTabs = elementsByRole(motionDocument, "tab");
+  videos[1].currentTime = 8;
+  motionTabs[1].click();
+  assert.equal(videos[1].currentTime, 0);
+  assert.equal(mediaProgress.style.width, "0%");
+  Object.defineProperty(videos[1], "duration", { configurable: true, value: 32 });
+  videos[1].currentTime = 16;
+  videos[1].dispatchEvent(new motionLanding.dom.window.Event("timeupdate"));
+  assert.equal(mediaProgress.style.width, "50%");
+  motionTabs[0].click();
+  assert.equal(videos[0].currentTime, 0);
+  assert.equal(mediaProgress.style.width, "0%");
+
+  const automaticMediaLanding = loadProductLanding(landingHtml);
+  const automaticMediaDocument = automaticMediaLanding.dom.window.document;
+  const automaticMediaTabs = elementsByRole(automaticMediaDocument, "tab");
+  const automaticMediaVideos = [...automaticMediaDocument.querySelectorAll("video")];
+  automaticMediaVideos[1].currentTime = 8;
+  automaticMediaLanding.advanceMilliseconds(6_000);
+  assert.equal(automaticMediaTabs[1].getAttribute("aria-selected"), "true");
+  assert.equal(automaticMediaVideos[1].currentTime, 0);
 
   const workspaceMediaToggle = [...motionDocument.querySelectorAll("button")].find(
     (button) => button.getAttribute("aria-label") === "Pause Workspace recording",

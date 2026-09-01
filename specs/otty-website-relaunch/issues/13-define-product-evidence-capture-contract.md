@@ -16,20 +16,20 @@ The maintainer owns the content and capture process. The contract does not presc
 
 Linux is the single canonical capture platform for the Product Landing. A complete duplicate set for macOS is not required. Platform-specific screenshots may still be authored within Documentation when they are useful for platform-specific guidance.
 
-All five Landing items use a consistent visual capture setup chosen by the maintainer: the same OTTY theme, terminal font and size, interface scale, and `16:10` frame. The site preserves the entire authored frame and must not use automatic `cover` cropping. When a capability needs a closer composition, the maintainer supplies that crop as the source asset.
+All five Landing items use a consistent visual capture setup chosen by the maintainer: the same OTTY theme, terminal font and size, and interface scale. Media retains its authored dimensions and composition. The site preserves every complete authored frame and must not use automatic `cover` cropping. When a capability needs a closer composition, the maintainer supplies that crop as the source asset.
 
 ### Static image contract
 
 - Hero is always a static screenshot.
-- A screenshot is an sRGB PNG at `2560×1600`.
+- A screenshot is an sRGB PNG at its authored dimensions.
 - Each screenshot has required authored alternative text.
 - The Astro build produces responsive AVIF and WebP variants while retaining PNG as the fallback; these generated variants are build outputs rather than separately maintained source assets.
 
 ### Motion contract
 
-- A capability recording is an MP4 using H.264 at `1920×1200`, 30 FPS, without an audio track.
-- A recording is at most eight seconds and at most 5 MB. GIF is not an accepted evidence format.
-- Every recording has a separate sRGB PNG poster with the same `16:10` composition, authored alternative text for the poster, and a short authored text description of the demonstrated action.
+- A capability recording is a WebM using VP9 Profile 0 and 8-bit 4:2:0 chroma subsampling, without an audio track. It retains its authored dimensions, frame rate, duration, and file size. A duplicate MP4 is not required for the launch browser baseline.
+- There is no fixed duration or file-size limit; the completed Product Landing remains subject to the launch performance quality bar. GIF is not an accepted evidence format.
+- Every recording has a separate sRGB PNG poster with the same composition, authored alternative text for the poster, and a short authored text description of the demonstrated action.
 - The site plays recordings muted, inline, automatically, and in a loop, while providing a pause/play control.
 - When the visitor prefers reduced motion, the site does not autoplay the recording and presents the poster instead.
 

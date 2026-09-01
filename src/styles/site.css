@@ -1,21 +1,21 @@
 @font-face {
-  font-family: "Hack";
+  font-family: "JetBrains Mono";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/hack/hack-regular.woff2") format("woff2");
+  src: url("/fonts/jetbrains-mono/jetbrains-mono-regular.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Hack";
+  font-family: "JetBrains Mono";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("/fonts/hack/hack-bold.woff2") format("woff2");
+  src: url("/fonts/jetbrains-mono/jetbrains-mono-bold.woff2") format("woff2");
 }
 
 :root {
-  --otty-font-mono: "Hack", "Adwaita Mono", "Liberation Mono", monospace;
+  --otty-font-mono: "JetBrains Mono", "Adwaita Mono", "Liberation Mono", monospace;
   --otty-page: #071014;
   --otty-panel: #0b151a;
   --otty-text: #edf8f6;
@@ -24,6 +24,10 @@
   --otty-cyan-bright: #84f1ea;
   --otty-magenta: #e7159c;
   --otty-line: rgb(132 241 234 / 18%);
+  --otty-grid-background:
+    linear-gradient(rgb(132 241 234 / 2.4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(132 241 234 / 2.4%) 1px, transparent 1px), var(--otty-page);
+  --otty-grid-size: 4.5rem 4.5rem;
 
   --sl-font: var(--otty-font-mono);
   --sl-font-mono: var(--otty-font-mono);
@@ -40,36 +44,20 @@
   --sl-color-hairline-shade: #030a0d;
 }
 
-html[data-theme="light"] {
-  --sl-color-accent-low: #d4f5f2;
-  --sl-color-accent: #087e7a;
-  --sl-color-accent-high: #064e4c;
-  --sl-color-text-accent: #08736f;
-  --sl-color-bg: #f5faf9;
-  --sl-color-bg-nav: #edf6f5;
-  --sl-color-bg-sidebar: #edf6f5;
-  --sl-color-bg-inline-code: #e3f0ef;
-  --sl-color-hairline-light: rgb(6 78 76 / 18%);
-  --sl-color-hairline: rgb(6 78 76 / 13%);
-  --sl-color-hairline-shade: #c9dcda;
-}
-
 body {
   font-family: var(--otty-font-mono);
   text-rendering: optimizeLegibility;
 }
 
-body:not(.landing-page) {
-  background-image:
-    linear-gradient(rgb(132 241 234 / 2.2%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(132 241 234 / 2.2%) 1px, transparent 1px);
-  background-size: 4.5rem 4.5rem;
+body:not(.landing-page),
+body:not(.landing-page) header.header,
+body:not(.landing-page) .sidebar-pane {
+  background: var(--otty-grid-background);
+  background-size: var(--otty-grid-size);
 }
 
-html[data-theme="light"] body:not(.landing-page) {
-  background-image:
-    linear-gradient(rgb(6 78 76 / 3.5%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(6 78 76 / 3.5%) 1px, transparent 1px);
+body:not(.landing-page) header.header .social-icons::after {
+  display: none;
 }
 
 ::selection {

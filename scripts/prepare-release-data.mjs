@@ -35,35 +35,7 @@ if (releaseSource === "fixture") {
     process.env.OTTY_GITHUB_RELEASES_API_URL ??
       "https://api.github.com/repos/otty-shell/otty/releases/latest",
   );
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "otty-website",
-    "X-GitHub-Api-Version": "2026-03-10",
-  };
-  const githubToken = process.env.GITHUB_TOKEN?.trim();
-
-  if (githubToken && releasesApiUrl.origin === "https://api.github.com") {
-    headers.Authorization = `Bearer ${githubToken}`;
-  }
-
-  const response = await fetch(releasesApiUrl, {
-    headers,
-    signal: AbortSignal.timeout(30_000),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `GitHub Releases API request failed with ${response.status} ${response.statusText}.`,
-    );
-  }
-
-  let release;
-
-  try {
-    release = await response.json();
-  } catch (cause) {
-    throw new Error("GitHub Releases API returned invalid JSON.", { cause });
-  }
+  const release = await fetchGithubJson(releasesApiUrl, "Releases");
 
   if (!release || typeof release !== "object" || Array.isArray(release)) {
     throw new Error("GitHub latest Release API response must be a JSON object.");
@@ -81,3 +53,33 @@ writeFileSync(
     2,
   )}\n`,
 );
+
+async function fetchGithubJson(apiUrl, label) {
+  const headers = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "otty-website",
+    "X-GitHub-Api-Version": "2026-03-10",
+  };
+  const githubToken = process.env.GITHUB_TOKEN?.trim();
+
+  if (githubToken && apiUrl.origin === "https://api.github.com") {
+    headers.Authorization = `Bearer ${githubToken}`;
+  }
+
+  const response = await fetch(apiUrl, {
+    headers,
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `GitHub ${label} API request failed with ${response.status} ${response.statusText}.`,
+    );
+  }
+
+  try {
+    return await response.json();
+  } catch (cause) {
+    throw new Error(`GitHub ${label} API returned invalid JSON.`, { cause });
+  }
+}

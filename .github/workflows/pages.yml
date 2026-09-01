@@ -45,7 +45,7 @@ jobs:
       - name: Build synchronized production artifact
         run: npm run build
         env:
-          OTTY_SOURCE_DIR: ${{ github.workspace }}/.otty-source
+          OTTY_DOCUMENTATION_INDEX: ${{ github.workspace }}/.otty-source/docs/public/index.md
           OTTY_RELEASE_SOURCE: github
           GITHUB_TOKEN: ${{ github.token }}
 

@@ -12,9 +12,9 @@ A Terminal-first Engineer needs one trustworthy public experience that explains 
 
 Replace the current page with one fully static Astro site using Starlight for Documentation. The Product Landing at the root presents OTTY as an Early Release Terminal-first Workspace for development and operations across local and remote machines. It uses the selected Signal Sequence visual language, a compact proof-led narrative, and five real Product Evidence items grounded in the latest Published Release.
 
-Rolling Documentation is authored in the OTTY repository's Public Documentation Source and staged ephemerally into the website during every build. Starlight supplies filesystem-driven navigation and Pagefind search. Installation and Downloads remains authored Documentation at the stable install route, but embeds one website-owned LatestDownloads component whose facts and direct links come from a validated latest-stable GitHub Release.
+Rolling Documentation is authored in the OTTY repository's Public Documentation Source and staged ephemerally into the website during every build. Starlight supplies filesystem-driven navigation and Pagefind search. The Getting Started Binary installation guide is the canonical Installation and Downloads destination and embeds one website-owned LatestDownloads component whose facts and direct links come from a validated latest-stable GitHub Release.
 
-One production pipeline responds to website changes, an hourly schedule, and manual dispatch. It checks out both repositories, stages Documentation, fetches and validates release data, builds Astro and Pagefind output, and deploys only the resulting dist artifact through a separately permissioned GitHub Pages job. A local production-preview command performs the same preparation and build using an explicit OTTY_SOURCE_DIR, then serves dist for the maintainer's manual launch review.
+One production pipeline responds to website changes, an hourly schedule, and manual dispatch. It checks out both repositories, stages Documentation, fetches and validates release data, builds Astro and Pagefind output, and deploys only the resulting dist artifact through a separately permissioned GitHub Pages job. A local production-preview command performs the same preparation and build using an explicit absolute `OTTY_DOCUMENTATION_INDEX` path, then serves dist for the maintainer's manual launch review.
 
 ## User Stories
 
@@ -72,7 +72,7 @@ One production pipeline responds to website changes, an hourly schedule, and man
 52. As an Intel Mac user, I want the validated Intel DMG, so that I receive the matching architecture.
 53. As an installer, I want each method to show platform, architecture, format, exact filename, rounded size, and a direct GitHub Release link, so that I can verify my selection.
 54. As an installer, I want concise architecture help, so that Apple Silicon, Intel Mac, and Linux x86-64 labels are understandable.
-55. As a Windows or Linux ARM64 user, I want the platform shown as unavailable without a disabled control or Coming soon promise, so that the limitation is explicit and honest.
+55. As a Windows user, I want a clearly labeled Coming soon card without a disabled control, and as a Linux ARM64 user I want the platform shown as unavailable, so that current limitations remain explicit.
 56. As an installer without JavaScript, I want all release facts and download links to work, so that installation does not depend on client scripting.
 57. As an installer, I want one All releases link, so that I can browse prereleases and older Published Releases on GitHub.
 58. As a macOS installer, I want accurate notice that OTTY is not notarized, so that Apple's first-launch warning is not surprising.
@@ -85,7 +85,7 @@ One production pipeline responds to website changes, an hourly schedule, and man
 65. As a release maintainer, I want all four packages assembled on a draft and published atomically, so that the website never sees a partially complete Published Release.
 66. As a release maintainer, I want to rerun an existing tag destructively when needed, so that I can reproduce the complete Published Release without a second identity.
 67. As a website maintainer, I want the site build to select and validate the latest stable Published Release, so that broken release metadata cannot reach visitors.
-68. As a website maintainer, I want browsers to consume static generated release facts rather than call GitHub's API, so that the public page has no runtime API dependency.
+68. As a website maintainer, I want browsers to consume static generated Published Release facts while the Product Landing may refresh the public GitHub star count at runtime with a `0` fallback, so that release correctness never depends on a browser API call.
 69. As a website maintainer, I want website changes to trigger a rebuild, so that source updates reach GitHub Pages normally.
 70. As a website maintainer, I want an hourly synchronization, so that Rolling Documentation and the latest stable Published Release reach the site within one hour.
 71. As a website maintainer, I want a manual synchronization command in GitHub Actions, so that I can recover from transient failures or refresh on demand.
@@ -93,7 +93,7 @@ One production pipeline responds to website changes, an hourly schedule, and man
 73. As a website maintainer, I want only the build job to read source inputs and only the deployment job to hold Pages write permission, so that deployment authority remains narrow.
 74. As a website maintainer, I want obsolete concurrent builds cancelled, so that an older synchronization cannot replace a newer one.
 75. As a website maintainer, I want a single local production-preview command, so that I can review the actual dist output without running staging, release generation, Astro, and Pagefind separately.
-76. As a website maintainer, I want local Documentation selected explicitly through OTTY_SOURCE_DIR, so that preview never depends on an assumed sibling checkout location.
+76. As a website maintainer, I want local Documentation selected explicitly through the absolute path to its index file, so that preview never depends on an assumed repository or Documentation location.
 77. As a website maintainer, I want a local-only compliant release fixture, so that website development is possible before a live compliant Published Release exists.
 78. As a website maintainer, I want final launch review to use the live GitHub Release rather than the fixture, so that exact production download links are verified.
 79. As a website maintainer, I want a static production preview rather than an SPA development shell, so that local review matches GitHub Pages behavior.
@@ -106,7 +106,7 @@ One production pipeline responds to website changes, an hourly schedule, and man
 
 ## Implementation Decisions
 
-1. Build one static Astro application with Starlight. The Product Landing is served at /, Documentation at /docs/, and Installation and Downloads at /docs/install/.
+1. Build one static Astro application with Starlight. The Product Landing is served at /, Documentation at /docs/, and Installation and Downloads at /docs/getting-started/installation/binary/.
 2. Configure the canonical site origin as https://otty.run with no repository base path. Preserve the custom-domain declaration in the deployed Pages artifact.
 3. Every public route must be prerendered to HTML. Do not introduce runtime SSR, an application backend, a client-side router, or an SPA shell.
 4. JavaScript is progressive enhancement for Pagefind search, the Signal Sequence interaction, media controls, optional platform emphasis, and Starlight's responsive menu. Primary content and direct links cannot depend on hydration.
@@ -123,20 +123,20 @@ One production pipeline responds to website changes, an hourly schedule, and man
 15. The Footer contains OTTY identity, Documentation, GitHub, license, and copyright or contributor attribution where applicable. It does not repeat the Download action or become a large sitemap.
 16. Implement the Signal Sequence visual language as a near-black terminal-led canvas with restrained coordinate-grid texture, fine structural rules, cyan as the primary signal color, and magenta as a secondary accent. Color alone cannot convey focus, status, or errors.
 17. Prefer dense bordered surfaces over generic rounded cards and decorative shadows. Use command-like labels, prompt syntax, indices, and a restrained cursor motif without presenting body copy as simulated terminal output.
-18. Self-host Hack WOFF2 files and use Adwaita Mono, Liberation Mono, and generic monospace fallbacks. Do not introduce a third-party font runtime.
+18. Self-host JetBrains Mono WOFF2 files and use Adwaita Mono, Liberation Mono, and generic monospace fallbacks. Do not introduce a third-party font runtime.
 19. Customize Starlight through public configuration, CSS, and the smallest necessary component overrides. Preserve its conventional header, search, sidebar, article, table of contents, skip navigation, and responsive navigation behavior.
-20. On narrow screens, render the Hero in one column, keep evidence at its complete 16:10 ratio, place the four capability tabs in a readable two-column arrangement, retain full download labels, and prevent horizontal page scrolling.
+20. On narrow screens, render the Hero in one column, keep every complete authored evidence frame visible, place the four capability tabs in a readable two-column arrangement, retain full download labels, and prevent horizontal page scrolling.
 21. The Product Landing owns five canonical real Product Evidence items: one Hero screenshot and one item for each Current Capability group. Neither current repository screenshot is accepted as launch evidence.
 22. The maintainer owns Product Evidence content, redaction, visual consistency, accuracy, and refresh timing. The website does not store an evidence manifest or validate release provenance, tag, commit, platform, or freshness.
 23. Linux is the canonical Product Landing capture platform. A complete duplicate macOS set is not required.
-24. Every screenshot is an sRGB 2560×1600 PNG with authored alternative text. The build generates responsive AVIF and WebP variants while preserving PNG fallback, intrinsic dimensions, and the complete authored frame without automatic cover cropping.
+24. Every screenshot is an sRGB PNG with authored alternative text and retains its authored dimensions. The build generates responsive AVIF and WebP variants while preserving PNG fallback, intrinsic dimensions, and the complete authored frame without automatic cover cropping.
 25. The Hero is always a static screenshot. Each capability may use either a screenshot or a short recording.
-26. Every recording is a silent H.264 MP4 at 1920×1200 and 30 FPS, no longer than eight seconds and no larger than 5 MB. GIF is not accepted.
-27. Every recording has a separate sRGB PNG poster with matching 16:10 composition, poster alternative text, and a short text description of the demonstrated action.
+26. Every recording is a silent WebM using VP9 Profile 0 and 8-bit 4:2:0 chroma subsampling. Recordings retain their authored dimensions, frame rate, duration, and file size; no duplicate MP4 is required, and GIF is not accepted. The completed Product Landing remains subject to the launch performance quality bar.
+27. Every recording has a separate sRGB PNG poster with matching composition, poster alternative text, and a short text description of the demonstrated action.
 28. Recordings play muted, inline, automatically, and in a loop under normal motion preferences, with a pause/play control. Reduced-motion preference prevents autoplay and uses the poster. A failed video still leaves the poster and description available.
-29. The only Public Documentation Source is the explicitly public docs/public tree on otty/main. Internal OTTY documentation is never staged or rendered.
+29. The only Public Documentation Source is the directory containing the `index.md` file explicitly supplied through `OTTY_DOCUMENTATION_INDEX`. The website does not derive that directory from the OTTY repository root; internal OTTY documentation is never staged or rendered.
 30. Every website build clears the generated Documentation staging area before copying the Public Documentation Source. The staged result and generated release data are ephemeral and are never committed.
-31. Local staging uses the same synchronization behavior as production but requires the maintainer to provide OTTY_SOURCE_DIR explicitly. Do not assume a sibling repository location.
+31. Local staging uses the same synchronization behavior as production but requires the maintainer to provide an absolute `OTTY_DOCUMENTATION_INDEX` path explicitly. Do not assume a sibling repository or a fixed Documentation path inside it.
 32. Public Documentation may contain Markdown and MDX. Every page requires title frontmatter; all other metadata remains optional.
 33. File paths define Documentation routes, index.md defines the Documentation index, and relative assets must remain within the Public Documentation Source so staging preserves them.
 34. MDX supports Starlight components and a narrow set of components exposed by the website as a stable authoring API. Arbitrary package imports and client applications are unsupported.
@@ -144,20 +144,20 @@ One production pipeline responds to website changes, an hourly schedule, and man
 36. Enable Starlight's Pagefind integration for Documentation only. Exclude the Product Landing. Do not introduce hosted search or a runtime search backend.
 37. Build Pagefind from the completed production output. Any indexing error fails the build.
 38. Documentation remains rolling and independent of Published Releases. Do not add release-aligned snapshots, current/preview/archive variants, version selectors, or version-scoped search.
-39. The OTTY repository owns the authored Installation and Downloads page and all surrounding prose, commands, ordering, compatibility statements, and platform guidance.
-40. The authored Installation and Downloads page must include exactly one website-provided LatestDownloads MDX component. A missing page, missing component, or duplicate component fails the build.
-41. LatestDownloads receives release facts from generated typed build data and accepts no authored release-specific values. Browsers never call the GitHub API.
+39. The OTTY repository owns the authored Installation and Downloads page and its surrounding prose, commands, ordering, and compatibility statements. LatestDownloads owns the concise architecture, availability, and first-launch guidance placed directly beside its platform-specific choices.
+40. The authored `Getting Started/Installation/Binary.mdx` page must include exactly one website-provided LatestDownloads MDX component. A missing page, missing component, or duplicate component fails the build.
+41. LatestDownloads receives release facts from generated typed build data and accepts no authored release-specific values. It never obtains Published Release facts through a browser GitHub API call.
 42. Generated release data includes the selected stable version, publication date, release-notes destination, the GitHub Releases destination, and method records containing platform, architecture, package format, exact filename, byte size, and browser_download_url.
-43. LatestDownloads renders version as Latest stable, publication date, release notes, one All releases link, and every current Installation Method with a rounded human-readable size and exact direct GitHub asset link.
+43. LatestDownloads renders version as Latest stable, publication date, release notes, one All releases link, and every current Installation Method with an exact direct GitHub asset link. It does not expose package size, filename, or redundant method prose in the platform sections.
 44. The first-launch methods are Debian- or Ubuntu-style Linux x86-64 through deb, RPM-family Linux x86-64 through rpm, Apple Silicon macOS through the aarch64 DMG, and Intel macOS through the x86_64 DMG.
-45. Group initial methods into Linux and macOS while keeping every method simultaneously visible and usable without JavaScript. Wide presentation is a compact technical table; narrow presentation is stacked and non-clipping.
+45. Present Linux, macOS, and Windows as three full-width document sections in that order while keeping every current method simultaneously visible and usable without JavaScript. Each section uses an unnumbered level-two heading with a stable permalink and appears in Starlight's desktop and mobile On this page navigation. Within Linux and macOS, group methods into format rows and render one compact action per supported architecture. Linux has deb and rpm rows with x64 actions; macOS has one dmg row with ARM64 and Intel actions. Windows communicates Coming soon only.
 46. Optional platform detection may emphasize a likely method but never hide methods, redirect, select authoritatively, or control which data is rendered.
-47. Explain Apple Silicon as M1 or newer, distinguish Intel Macs, describe Linux x86-64 as Intel or AMD 64-bit, and state that Linux arm64 or aarch64 has no package.
-48. Show Windows and Linux ARM64 as currently unavailable without a disabled control or Coming soon promise.
+47. Directly after each available platform's format list, explain Apple Silicon as M1 or newer, distinguish Intel Macs, describe Linux x64 as Intel or AMD 64-bit, and state that Linux arm64 or aarch64 has no package.
+48. Show Windows as Coming soon in its own section without a disabled control or additional availability prose.
 49. Compatibility promises beyond validated platform, architecture, and format remain authored Documentation. Do not infer operating-system or distribution support from filenames.
-50. Installation and Downloads must state that OTTY is not notarized by Apple and describe Apple's supported System Settings → Privacy & Security → Open Anyway flow. Do not recommend disabling Gatekeeper or removing quarantine attributes.
+50. Directly after the macOS format list, state that OTTY is not notarized by Apple and describe Apple's supported System Settings → Privacy & Security → Open Anyway flow. Do not recommend disabling Gatekeeper or removing quarantine attributes.
 51. Do not add generic checksum or signature warnings and do not claim that GitHub hosting verifies package integrity or publisher identity.
-52. Model future working Installation Methods so that a method may resolve to a Published Release asset, a command, or an official external destination. Do not render placeholders or unavailable future methods.
+52. Model future working Installation Methods so that a method may resolve to a Published Release asset, a command, or an official external destination such as a Documentation page. Do not render placeholder actions or unavailable future methods; the Windows card remains status-only until a working method exists.
 53. GitHub Releases is the durable source for Published Releases and package files. The website neither mirrors nor proxies package assets.
 54. A Published Release is identified by a strict v<SemVer> tag whose version matches the OTTY repository VERSION and Cargo package version. A SemVer suffix marks a prerelease; a normal SemVer release is eligible as latest stable.
 55. A compliant Published Release contains exactly four required assets: otty_<version>_amd64.deb, otty-<version>-1.x86_64.rpm, otty_<version>-aarch64-apple-darwin.dmg, and otty_<version>-x86_64-apple-darwin.dmg.
@@ -168,9 +168,9 @@ One production pipeline responds to website changes, an hourly schedule, and man
 60. Any missing stable release, invalid version, incomplete or incorrectly named matrix, API failure, or release-data generation error fails the build before deployment.
 61. Before relaunch, the existing v0.1.0 Published Release must be recreated through the external release pipeline because its current RPM filename violates the contract. Do not add an alias or transitional validator exception.
 62. Do not require a separate release manifest, public checksums, package signatures, provenance attestations, notarization, Linux repository signatures, or immutable-release migration.
-63. Expose a package script named preview:production through the selected package manager. It requires OTTY_SOURCE_DIR, clears and stages Documentation, obtains release input, runs the same release validator, builds Astro and Pagefind, serves the completed dist output, and prints the local URL.
+63. Expose a package script named preview:production through the selected package manager. It requires `OTTY_DOCUMENTATION_INDEX`, clears and stages Documentation, obtains release input, runs the same release validator, builds Astro and Pagefind, serves the completed dist output, and prints the local URL.
 64. Provide an explicit local-only compliant release fixture for development before a live compliant Published Release exists. It passes through the same release validator and cannot be selected by the production workflow.
-65. Final launch preview does not use the fixture. It uses an OTTY_SOURCE_DIR representing the intended public Documentation and the live GitHub Release data.
+65. Final launch preview does not use the fixture. It uses an absolute `OTTY_DOCUMENTATION_INDEX` path representing the intended Public Documentation Source and the live GitHub Release data.
 66. Configure one GitHub Pages workflow for pushes to website main, an hourly schedule, and manual workflow dispatch. Cancel obsolete concurrent runs.
 67. The read-only build job checks out both repositories, installs locked dependencies, stages Documentation, generates release data, and runs the production Astro build including Pagefind.
 68. A dependent deployment job receives only the completed dist artifact and alone holds Pages write and identity permissions.
@@ -192,12 +192,12 @@ One production pipeline responds to website changes, an hourly schedule, and man
 ## Testing Decisions
 
 1. The primary testing seam is the complete production artifact. Tests and review should observe the same pipeline boundary that GitHub Pages uses: Public Documentation Source plus release input enter the production build, and the observable result is either a failed build with no deployment or a completed dist artifact.
-2. The preview:production package script is the human-facing entry point to that seam. It must require OTTY_SOURCE_DIR explicitly and perform staging, release validation, Astro generation, Pagefind indexing, and serving without requiring the maintainer to invoke those steps individually.
+2. The preview:production package script is the human-facing entry point to that seam. It must require an absolute `OTTY_DOCUMENTATION_INDEX` path explicitly and perform staging, release validation, Astro generation, Pagefind indexing, and serving without requiring the maintainer to invoke those steps individually.
 3. A good automated contract check, where one is needed for fail-closed behavior, asserts exit status and externally visible generated output rather than internal helper calls, private component state, CSS class names, or implementation-specific module structure.
 4. The production build must demonstrably reject a missing Public Documentation Source, stale staging contamination, missing title, missing or duplicated LatestDownloads component, unavailable or invalid release data, prerelease-only input, and incomplete or incorrectly named package matrices.
 5. The production build must demonstrably accept a minimal valid Public Documentation Source and a compliant stable release fixture and produce the canonical Product Landing, Documentation index, Installation and Downloads route, generated navigation, release facts, direct links, responsive evidence output, sitemap, canonical metadata, and Pagefind assets.
 6. The local-only release fixture is exercised through the same validator and generated-data boundary as live API input. Tests must ensure the production workflow cannot select the fixture.
-7. Documentation staging is tested at the highest filesystem boundary: a controlled OTTY_SOURCE_DIR is cleared into the generated staging area, public Markdown, MDX, and relative assets appear once, and unrelated internal material does not appear.
+7. Documentation staging is tested at the highest filesystem boundary: a controlled absolute Documentation index path selects a source tree at an arbitrary filesystem location, that tree is cleared into the generated staging area, public Markdown, MDX, and relative assets appear once, and unrelated internal material does not appear.
 8. Release validation is tested as a public data contract: strict version semantics, stable versus prerelease selection, exact filenames, exactly one asset per required method, direct GitHub URLs, byte sizes, release date, release notes, and failure on any missing or mismatched required value.
 9. LatestDownloads is judged by its rendered production HTML and links, not by its internal component implementation. All four methods and their release facts must be present before client JavaScript runs.
 10. Signal Sequence is judged by visible and accessibility behavior: four named tabs, selected state, keyboard operation, six-second advancement, hover and focus pause, explicit pause/play, no focus movement, reduced-motion behavior, complete media frames, and all fallback content in built HTML.
@@ -225,7 +225,7 @@ One production pipeline responds to website changes, an hourly schedule, and man
 - Arbitrary MDX package imports or authored client applications.
 - An on-site historical Release Catalog; GitHub owns prerelease and older-release browsing.
 - New Installation Methods such as Homebrew, Apt repositories, or an install script.
-- Placeholders, disabled controls, and Coming soon Installation Methods.
+- Placeholder actions and disabled Installation Method controls.
 - Public checksums, detached signatures, package or repository signatures, provenance attestations, immutable releases, Apple Developer ID signing, or notarization.
 - Mirroring or proxying release packages through the website.
 - A release manifest separate from GitHub Release metadata.
@@ -246,4 +246,4 @@ One production pipeline responds to website changes, an hourly schedule, and man
 - The current website repository contains only a basic static page and a repository-root Pages deployment. No framework, lockfile, build system, or test suite exists yet, so implementation establishes the Astro project and replaces the Pages workflow.
 - The first public content language is English.
 - A compliant latest-stable Published Release is a launch prerequisite. The separate OTTY release-pipeline work should be completed early enough that final local preview can use live release data instead of the development fixture.
-- OTTY_SOURCE_DIR is the explicit local Documentation input for production preview. There is no implicit sibling-checkout default.
+- `OTTY_DOCUMENTATION_INDEX` is the explicit absolute path to the Public Documentation Source `index.md` used by production preview. There is no implicit repository location or fixed Documentation subdirectory.
