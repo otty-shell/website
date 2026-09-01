@@ -9,7 +9,7 @@ import {
   rmSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
 import { JSDOM } from "jsdom";
@@ -516,6 +516,35 @@ test("the production artifact contains the Product Landing and synchronized Docu
     .filter((path) => path.endsWith(".html"))
     .map((path) => readFileSync(path, "utf8"))
     .join("\n");
+  const artifactFiles = listFiles(artifactPath).map((path) => relative(artifactPath, path));
+  const repositoryOnlyPaths = [
+    ".generated",
+    ".git",
+    ".github",
+    "fixtures",
+    "node_modules",
+    "scripts",
+    "src",
+    "tests",
+  ];
+
+  for (const repositoryOnlyPath of repositoryOnlyPaths) {
+    assert.equal(
+      artifactFiles.some(
+        (path) => path === repositoryOnlyPath || path.startsWith(`${repositoryOnlyPath}/`),
+      ),
+      false,
+      `${repositoryOnlyPath} remains outside the public artifact`,
+    );
+  }
+  for (const repositorySourceFile of [
+    "astro.config.mjs",
+    "package-lock.json",
+    "package.json",
+    "tsconfig.json",
+  ]) {
+    assert.equal(artifactFiles.includes(repositorySourceFile), false);
+  }
   assert.equal(completeArtifact.match(/alt="Terminal map"/g)?.length, 1);
   assert.doesNotMatch(completeArtifact, /artifact-internal-marker/);
 

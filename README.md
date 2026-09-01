@@ -63,3 +63,15 @@ The production build is written to `dist/`. Starlight generates the Documentatio
 sidebar from the staged filesystem, validated release facts are rendered into static HTML, and then
 Pagefind indexes the completed artifact. Documentation staging and generated release data are
 ignored by Git, as are generated image variants, Pagefind assets, and the rest of `dist/`.
+
+## Automated deployment
+
+The GitHub Pages workflow runs for pushes to website `main`, once per hour, and on manual dispatch.
+Its read-only build job checks out the website and `otty-shell/otty` `main`, installs the locked npm
+dependency graph, and runs the same `npm run build` production path with live GitHub Release input.
+Only the completed `dist/` output is uploaded as the Pages artifact.
+
+A separate dependent job owns the Pages and identity permissions and deploys that artifact. If
+synchronization, validation, Astro, Pagefind, or upload fails, deployment does not run and the last
+successful site remains live. Recover a flawed deployment with a normal source fix or revert and a
+workflow rerun; there is no separate rollback artifact path.
